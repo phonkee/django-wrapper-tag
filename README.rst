@@ -41,15 +41,6 @@ This will yield to::
     </div>
 
 That was just a simple eample what wrapper tag can do. It can do much more than that.
-Features:
-
-Tag arguments features:
-* default values
-* choices
-* validators
-
-Automatically generates documantation about arguments to tag documentation
-Define tag aliases and automatically register them as tags.
 
 Quickstart
 ----------
@@ -67,10 +58,21 @@ Then use it in a project::
 Features
 --------
 
-* TODO
+Wrapper tag provides multiple features for tag and arguments.
+
+* Automatically generates documantation about arguments to tag documentation
+* Define tag aliases and automatically register them as tags.
+* Provide custom render method for tag (`render_tag`)
+* when `TEMPLATE_DEBUG` is enabled wrapper tag runs validations for callbacks
+
+Tag arguments features:
+
+* default values for arguments
+* choices for arguments
+* validators for arguments
 
 Running Tests
---------------
+-------------
 
 Does the code actually work?
 
