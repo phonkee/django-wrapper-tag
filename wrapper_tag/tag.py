@@ -27,17 +27,21 @@ class TagOptions(utils.TemplateMixin):
     end_tag = None
 
     def __init__(self, options=None, tag_name=None):
-        self.end_tag = getattr(options, 'end_tag', None)
         self.start_tag = getattr(options, 'start_tag', None)
-        self.as_var_only = bool(getattr(options, 'as_var_only', False))
-        self.aliases = getattr(options, 'aliases', [])
-        self.tag_name = tag_name
 
         # if no start_tag is given, we construct it from tag class name
         if not self.start_tag:
             if tag_name.lower().endswith('tag'):
                 tag_name = tag_name[:-3]
             self.start_tag = utils.camel_to_separated(tag_name)
+
+        end_tag = getattr(options, 'end_tag', None)
+        if end_tag:
+            self.end_tag = end_tag
+
+        self.as_var_only = bool(getattr(options, 'as_var_only', False))
+        self.aliases = getattr(options, 'aliases', [])
+        self.tag_name = tag_name
 
         super(TagOptions, self).__init__(template=getattr(options, 'template', None),
                                          template_name=getattr(options, 'template_name', None))
@@ -146,6 +150,7 @@ class BaseTag(object):
     varname = None
     nodelist = None
     data_callbacks = []
+    arguments = []
 
     def __init__(self, parser, token):
         """

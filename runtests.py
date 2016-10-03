@@ -57,26 +57,16 @@ try:
                 },
             },
             'loggers': {
-                # 'django.request': {
-                #     'handlers': ['console'],
-                #     'level': 'DEBUG',
-                #     'propagate': False
-                # },
                 '': {
                     'handlers': ['console'],
                     'level': 'DEBUG',
                     'propagate': False,
                 },
-                # 'smartadmin.tags.button': {
-                #     'handlers': ['console'],
-                #     'level': 'DEBUG',
-                #     'propagate': False,
-                # },
-                # 'smartadmin.tags.simple.modal': {
-                #     'handlers': ['console'],
-                #     'level': 'DEBUG',
-                #     'propagate': False,
-                # },
+                'wrapper_tag.tags.button': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': False,
+                },
             },
         }
     )
@@ -90,6 +80,7 @@ try:
         setup()
 
 except ImportError:
+    raise
     import traceback
     traceback.print_exc()
     msg = "To fix this error, run: pip install -r requirements_test.txt"
