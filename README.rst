@@ -13,7 +13,23 @@ Wrapping template tag for django
 Documentation
 -------------
 
-The full documentation is at https://django-wrapper-tag.readthedocs.org.
+Wrapper tag provides base class for wrapping tag. Wrapping tag which can have defined keyword arguments, keyword
+arguments group in declarative way, and provide multiple steps of template rendering.
+
+Example::
+
+    class ExampleTag(wrapper_tag.Tag):
+        title = wrapper_tag.Keyword(help_text=('title for example tag'))
+
+        class Meta:
+            template = "<div{{ title__rendered }}>{{ content }}</div>"
+
+        def render_title(self, argument, data, context):
+            if argument.name not in data:
+                return
+
+            return ' title="{title}"'.format(data[argument.name])
+
 
 Quickstart
 ----------
