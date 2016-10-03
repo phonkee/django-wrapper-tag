@@ -15,7 +15,7 @@ arguments group in declarative way, and provide multiple steps of template rende
 
 Example
 
-.. code:: python
+```
 
     from django import template
 
@@ -33,6 +33,7 @@ Example
                 return
 
             return ' title="{title}"'.format(data[argument.name])
+```
 
 And then simply use tag in template:
 
