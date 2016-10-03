@@ -32,7 +32,7 @@ class MyEvent(wrapper_tag.Keyword):
             events[argument.name] = value
 
         # store events
-        rendered_tag.data['events'] = events
+        rendered_tag['events'] = events
 
 
 @wrapper_tag.register_tag(register)

@@ -54,7 +54,14 @@ class RequiresTagValidator(object):
         :param value:
         :return:
         """
-        tag = getattr(value, 'tag', None)
+
+        from wrapper_tag import Tag
+
+        # first check if it's tag
+        if value == Tag or isinstance(value, Tag):
+            tag = value.options.start_tag
+        else:
+            tag = getattr(value, 'tag', None)
 
         if tag is None:
             raise ValueError('value {} not tag'.format(smart_text(value)))
