@@ -39,6 +39,7 @@ Example
 
 And then simply use tag in template:
 
+
 .. highlight:: html
 
     {% example title="Some informational title" %}
