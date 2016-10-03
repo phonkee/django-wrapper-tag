@@ -43,11 +43,13 @@ This will yield to::
 That was just a simple eample what wrapper tag can do. It can do much more than that.
 Features:
 
-* tag arguments features:
-    * default values
-    * choices
-    * validators
-* documentation - wrapper tag automatically generates documantation to tags (arguments, aliases)
+Tag arguments features:
+* default values
+* choices
+* validators
+
+Automatically generates documantation about arguments to tag documentation
+Define tag aliases and automatically register them as tags.
 
 Quickstart
 ----------
