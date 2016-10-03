@@ -16,22 +16,17 @@ arguments group in declarative way, and provide multiple steps of template rende
 Example::
 
     from django import template
-
     register = template.Library()
 
     @wrapper_tag.register_tag(register)
     class ExampleTag(wrapper_tag.Tag):
         title = wrapper_tag.Keyword(help_text=('title for example tag'))
-
         class Meta:
             template = "<div{{ title__rendered }}>{{ content }}</div>"
-
         def render_title(self, argument, data, context):
             if argument.name not in data:
                 return
-
             return ' title="{title}"'.format(data[argument.name])
-
 
 And then simply use tag in template::
 
