@@ -155,7 +155,6 @@ class BaseTag(object):
     kwargs = None
     varname = None
     nodelist = None
-    data_callbacks = []
     arguments = []
 
     # signals
@@ -168,10 +167,6 @@ class BaseTag(object):
         :param parser:
         :param token:
         """
-
-        # empty data_callbacks
-        self.data_callbacks = []
-
         # parse here all args, kwargs...
         self.nodelist = parser.parse((self.options.end_tag,))
 
@@ -187,15 +182,6 @@ class BaseTag(object):
 
         # die token die
         parser.delete_first_token()
-
-    @classmethod
-    def add_data_callback(cls, data_callback):
-        """
-        Adds single data_callback function to tag class
-        :param data_callback:
-        :return:
-        """
-        cls.data_callbacks.append(data_callback)
 
     def get_tag_data(self, context):
         """

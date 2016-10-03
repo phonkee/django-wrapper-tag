@@ -143,14 +143,6 @@ class Argument(utils.TemplateMixin):
                 utils.verify_func_signature(trm, 'argument', 'data', 'context', exact_names=True,
                                             prefix="{}.{}, ".format(tag_cls.__name__, self.name))
 
-        if callable(self.data_callback):
-
-            # verify data_callback signature
-            if utils.is_template_debug():
-                utils.verify_func_signature(self.data_callback, 'tag', 'data', exact_names=True)
-
-            tag_cls.add_data_callback(self.data_callback)
-
     def full_clean(self, tag, value):
         """
         Internal!
