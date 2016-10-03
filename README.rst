@@ -13,7 +13,7 @@ Documentation
 Wrapper tag provides base class for wrapping tag. Wrapping tag which can have defined keyword arguments, keyword
 arguments group in declarative way, and provide multiple steps of template rendering.
 
-Example
+Example::
 
     from django import template
 
