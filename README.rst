@@ -5,9 +5,6 @@ wrapper_tag
 .. image:: https://badge.fury.io/py/django-wrapper-tag.png
     :target: https://badge.fury.io/py/django-wrapper-tag
 
-.. image:: https://travis-ci.org/phonkee/django-wrapper-tag.png?branch=master
-    :target: https://travis-ci.org/phonkee/django-wrapper-tag
-
 Wrapping template tag for django
 
 Documentation
@@ -18,7 +15,7 @@ arguments group in declarative way, and provide multiple steps of template rende
 
 Example
 
-.. code-block:: python
+.. code:: python
 
     from django import template
 
@@ -39,7 +36,7 @@ Example
 
 And then simply use tag in template:
 
-.. code-block:: html
+.. code:: html
 
     {% example title="Some informational title" %}
         Content
@@ -47,7 +44,7 @@ And then simply use tag in template:
 
 This will yield to:
 
-.. code-block:: html
+.. code:: html
 
     <div title="Some informational title">
         Content
