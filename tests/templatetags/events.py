@@ -17,13 +17,12 @@ class MyEvent(wrapper_tag.Keyword):
     def on_rendered_tag(self, sender, rendered_tag, data, context, **kwargs):
         """
         Collect all events and expose them to rendered tag
-        :param tag_cls:
-        :param rendered_tag:
-        :param data:
-        :param context:
+        :param sender: tag class
+        :param rendered_tag: rendered tag instance
+        :param data: tag data
+        :param context: render context
         :return:
         """
-
         events = {}
         for _, argument in six.iteritems(sender.arguments):
 

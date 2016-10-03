@@ -13,7 +13,7 @@ from wrapper_tag import utils
 from wrapper_tag import arguments
 from wrapper_tag import rendered
 
-from logging import getLogger
+from logging import getLogger, DEBUG
 
 
 logger = getLogger('wrapper_tag.tags')
@@ -226,9 +226,8 @@ class BaseTag(object):
             raise TemplateSyntaxError('Tag `{}` received unhandled kwargs: {}'.format(
                 self.options.start_tag, kwargs.keys()))
 
-        # update data
-        # @TODO: provide debugging for signals
-        self.on_data.send_robust(sender=self.__class__, data=tag_data, context=context)
+        # dispatch on_data signal
+        self.__dispatch_on_data(tag_data, context)
 
         # render all arguments
         for _, argument in six.iteritems(self.arguments):
@@ -261,10 +260,8 @@ class BaseTag(object):
         if not isinstance(rendered_tag, rendered.RenderedTag):
             rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag)
 
-        # send signal
-        # @TODO: provide debugging of signals (iterate over result)
-        result = self.on_rendered_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag,
-                                                  data=tag_kwargs, context=context)
+        # dispatch on_rendered_tag
+        self.__dispatch_on_rendered_tag(rendered_tag, tag_kwargs, context)
 
         # stored to context under self.varname
         if self.varname:
@@ -301,6 +298,36 @@ class BaseTag(object):
                                            self.options.start_tag))
             tmp = template.render(context)
         return rendered.RenderedTag(tmp, self.options.start_tag)
+
+    def __dispatch_on_data(self, data, context):
+        """
+        Dispatch on_data signal
+        :param data: tag data
+        :param context: context
+        :return:
+        """
+        result = self.on_data.send_robust(sender=self.__class__, data=data, context=context)
+
+        if self.logger.isEnabledFor(DEBUG):
+            for method, error in result:
+                if error:
+                    self.logger.error('on_rendered_tag: %s, returned error: %s', method, error)
+
+    def __dispatch_on_rendered_tag(self, rendered_tag, data, context):
+        """
+        Dispatch on_rendered_tag signal
+        :param rendered_tag:
+        :param data:
+        :param context:
+        :return:
+        """
+        result = self.on_rendered_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag, data=data,
+                                                  context=context)
+
+        if self.logger.isEnabledFor(DEBUG):
+            for method, error in result:
+                if error:
+                    self.logger.error('on_rendered_tag: %s, returned error: %s', method, error)
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):
