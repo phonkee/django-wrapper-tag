@@ -15,8 +15,6 @@ arguments group in declarative way, and provide multiple steps of template rende
 
 Example
 
-```
-
     from django import template
 
     register = template.Library()
@@ -33,7 +31,6 @@ Example
                 return
 
             return ' title="{title}"'.format(data[argument.name])
-```
 
 And then simply use tag in template:
 
