@@ -32,17 +32,14 @@ Example::
 
             return ' title="{title}"'.format(data[argument.name])
 
-And then simply use tag in template:
 
-.. code:: html
+And then simply use tag in template::
 
     {% example title="Some informational title" %}
         Content
     {% end:example %}
 
-This will yield to:
-
-.. code:: html
+This will yield to::
 
     <div title="Some informational title">
         Content
