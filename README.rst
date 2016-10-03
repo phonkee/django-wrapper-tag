@@ -18,7 +18,7 @@ arguments group in declarative way, and provide multiple steps of template rende
 
 Example
 
-.. highlight:: python
+.. code-block:: python
 
     from django import template
 
@@ -39,8 +39,7 @@ Example
 
 And then simply use tag in template:
 
-
-.. highlight:: html
+.. code-block:: html
 
     {% example title="Some informational title" %}
         Content
@@ -48,11 +47,20 @@ And then simply use tag in template:
 
 This will yield to:
 
-.. highlight:: html
+.. code-block:: html
 
     <div title="Some informational title">
         Content
     </div>
+
+That was just a simple eample what wrapper tag can do. It can do much more than that.
+Features:
+
+* tag arguments features:
+    * default values
+    * choices
+    * validators
+* documentation - wrapper tag automatically generates documantation to tags (arguments, aliases)
 
 Quickstart
 ----------
