@@ -4,7 +4,6 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.template import TemplateSyntaxError, Context
-from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from wrapper_tag import utils
@@ -386,17 +385,19 @@ class Event(Argument):
         """
         super(Event, self).contribute_to_class(tag_cls, name)
 
-        if getattr(tag_cls, '__events_patched', False):
-            return
+        # add callback
+        tag_cls.add_rendered_tag_callback(self.rendered_tag_callback, id='__events_patched')
 
-        def custom_render(orig):
-            def render(tag, tag_kwargs, context):
-                return orig(tag, tag_kwargs, context)
-            return render
-        tag_cls.render_tag = custom_render(tag_cls.render_tag)
-
-        # mark tag as patched
-        setattr(tag_cls, '__events_patched', True)
+    @classmethod
+    def rendered_tag_callback(cls, tag_cls, rendered_tag, data, context):
+        """
+        Callback when tag is rendered.
+        :param tag_cls:
+        :param rendered_tag:
+        :param data:
+        :param context:
+        :return:
+        """
 
 
 class Method(Argument):

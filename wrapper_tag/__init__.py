@@ -4,7 +4,6 @@ from wrapper_tag.rendered import RenderedTag
 from wrapper_tag.tag import Tag
 from wrapper_tag.utils import register_tag
 
-# read version from setuptools
 __version__ = "0.1.8"
 
 default_app_config = 'wrapper_tag.apps.WrapperTagConfig'

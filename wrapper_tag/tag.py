@@ -89,6 +89,7 @@ class TagMetaclass(type):
         current_arguments.sort(key=lambda x: x[1].creation_counter)
 
         attrs['_declared_arguments'] = OrderedDict(current_arguments)
+        attrs['rtc_ids'] = {}
 
         # # set _decorated_function for template Library.tag so it gets correct name for tag.
         # def fake_func():
@@ -150,6 +151,7 @@ class BaseTag(object):
     varname = None
     nodelist = None
     data_callbacks = []
+    rendered_tag_callbacks = []
     arguments = []
 
     def __init__(self, parser, token):
@@ -161,6 +163,7 @@ class BaseTag(object):
 
         # empty data_callbacks
         self.data_callbacks = []
+        self.rendered_tag_callbacks = []
 
         # parse here all args, kwargs...
         self.nodelist = parser.parse((self.options.end_tag,))
@@ -186,6 +189,20 @@ class BaseTag(object):
         :return:
         """
         cls.data_callbacks.append(data_callback)
+
+    @classmethod
+    def add_rendered_tag_callback(cls, rt_callback, id=None):
+        """
+        Adds single data_callback function to tag class
+        :param data_callback:
+        :return:
+        """
+        if id is not None:
+            if cls.rtc_ids.get(id):
+                return
+            else:
+                cls.rtc_ids[id] = True
+        cls.rendered_tag_callbacks.append(rt_callback)
 
     def get_tag_data(self, context):
         """
@@ -288,9 +305,22 @@ class BaseTag(object):
                 raise ImproperlyConfigured("tag: {}, error: please provide meta.template_name or meta.template".format(
                                            self.options.start_tag))
             tmp = template.render(context)
-        return rendered.RenderedTag(tmp, self.options.start_tag, **tag_kwargs)
+        return rendered.RenderedTag(tmp, self.options.start_tag)
 
-    def rendered_tag_callback(self, rendered_tag, data, context):
+    @classmethod
+    def rendered_tag_callback(cls, rendered_tag, data, context):
+        """
+        This callback is called after tag has been rendered
+        :param rendered_tag:
+        :param data:
+        :param context:
+        :return:
+        """
+
+        for callback in cls.rendered_tag_callbacks:
+            callback(cls, rendered_tag, data, context)
+
+        # store arguments data to rendered tag
         rendered_tag.data['arguments'] = data
 
 

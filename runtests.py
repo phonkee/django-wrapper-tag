@@ -20,6 +20,7 @@ try:
             "django.contrib.contenttypes",
             "django.contrib.sites",
             "wrapper_tag",
+            "tests",
         ],
         SITE_ID=1,
         MIDDLEWARE_CLASSES=(),
