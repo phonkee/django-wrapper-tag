@@ -16,8 +16,15 @@ Documentation
 Wrapper tag provides base class for wrapping tag. Wrapping tag which can have defined keyword arguments, keyword
 arguments group in declarative way, and provide multiple steps of template rendering.
 
-Example::
+Example
 
+.. highlight:: python
+
+    from django import template
+
+    register = template.Library()
+
+    @wrapper_tag.register_tag(register)
     class ExampleTag(wrapper_tag.Tag):
         title = wrapper_tag.Keyword(help_text=('title for example tag'))
 
@@ -30,6 +37,21 @@ Example::
 
             return ' title="{title}"'.format(data[argument.name])
 
+And then simply use tag in template:
+
+.. highlight:: html
+
+    {% example title="Some informational title" %}
+        Content
+    {% end:example %}
+
+This will yield to:
+
+.. highlight:: html
+
+    <div title="Some informational title">
+        Content
+    </div>
 
 Quickstart
 ----------
