@@ -22,6 +22,8 @@ from django.utils.functional import cached_property
 
 from logging import getLogger
 
+logger = getLogger("wrapper_tag")
+
 
 DJANGO_1_9_OR_HIGHER = (
     LooseVersion(get_version()) >= LooseVersion('1.9')
@@ -230,3 +232,68 @@ def find_elements(item, iterable):
             result.append(value)
 
     return result
+
+
+def register_tag(library, **kwargs):
+    """
+    Register WrapperTag class
+    :param library:
+    :param kwargs:
+    :return:
+
+    @TODO: update docs for given wrapper tag
+    """
+
+    def get_library_name(cls):
+        """
+        Returns library name
+        :param cls:
+        :return:
+        """
+        return repr(cls).split('.')[-2]
+
+    def wrap(cls):
+
+        from wrapper_tag import Tag
+        if not issubclass(cls, Tag) and is_template_debug():
+            raise ImproperlyConfigured("Class {} is not WrapperTag instance".format(cls))
+
+        from wrapper_tag import docgen
+
+        cls.__doc__ = docgen.generate(cls)
+
+        # add main library tag
+        library.tag(cls.options.start_tag, cls)
+
+        logger.debug("Registered `%s`=>`%s` wrapper tag.", cls.options.start_tag, cls.options.end_tag)
+
+        # # set library_name
+        # cls.options.library_name = get_library_name(cls)
+
+        # aliases = []
+        # for alias in cls.options.aliases:
+        #     if is_seq(alias):
+        #         start_tag, end_tag = alias[0], alias[1]
+        #     else:
+        #         start_tag, end_tag = alias, 'end:{}'.format(alias)
+        #     aliases.append({
+        #         'start_tag': start_tag,
+        #         'end_tag': end_tag,
+        #     })
+        #
+        # doc = cls.gen_doc(aliases=aliases)
+
+        # # register_tag also aliases (if available)
+        # for alias in aliases:
+        #     new_wrapper_tag_class = type(str('Alias_{}_{}'.format(alias, cls.__name__)), cls.__bases__,
+        #                                  dict(cls.__dict__))
+        #     new_wrapper_tag_class.options.start_tag = alias['start_tag']
+        #     new_wrapper_tag_class.options.end_tag = alias['end_tag']
+        #
+        #     new_doc = cls.gen_doc(alias_to=cls.options.start_tag)
+        #     library.tag(alias['start_tag'], init_outer(new_wrapper_tag_class, doc=new_doc))
+
+
+        return cls
+
+    return wrap

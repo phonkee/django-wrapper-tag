@@ -244,12 +244,44 @@ class BaseTag(object):
         # render content which is isolated from tag data
         tag_kwargs['content'] = self.nodelist.render(context)
 
-        return self.render_tag(tag_kwargs, context)
+        # render tag to variable
+        rendered_tag = self.render_tag(tag_kwargs, context)
+
+        # check if render_tag returned RenderedTag, if not wrap the text into it
+        if not isinstance(rendered_tag, rendered.RenderedTag):
+            rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag)
+
+        # add arguments to tag
+        self.rendered_tag_callback(rendered_tag, tag_kwargs, context)
+
+        # stored to context under self.varname
+        if self.varname:
+            try:
+                context[self.varname]
+            except KeyError:
+                pass
+            else:
+                if utils.is_template_debug():
+                    raise TemplateSyntaxError('variable {} already exists on context'.format(self.varname))
+
+            # store value to context and push one context
+            context[self.varname] = rendered_tag
+            context.push({})
+
+            return ''
+
+        # check if tag is intended as_var_only (can be only stored to variable, not print directly
+        if self.options.as_var_only and not self.varname and is_template_debug():
+            raise ImproperlyConfigured('Tag `{}` must be assigned to variable using `as variable`.'.format(
+                self.options.start_tag))
+
+        return rendered_tag
 
     def render_tag(self, tag_kwargs, context):
         """
         The method you should override in your custom tags
         """
+        tmp = ''
         with context.push(**tag_kwargs):
             template = self.options.template
             if template is None:
@@ -257,6 +289,9 @@ class BaseTag(object):
                                            self.options.start_tag))
             tmp = template.render(context)
         return rendered.RenderedTag(tmp, self.options.start_tag, **tag_kwargs)
+
+    def rendered_tag_callback(self, rendered_tag, data, context):
+        rendered_tag.data['arguments'] = data
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):
