@@ -39,11 +39,12 @@ setup(
     author_email='phonkee@phonkee.eu',
     url='https://github.com/phonkee/django-wrapper-tag',
     packages=[
-        'django',
-        'six',
     ],
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        'django>=1.8',
+        'six',
+    ],
     license="MIT",
     zip_safe=False,
     keywords='django-wrapper-tag',
