@@ -20,9 +20,12 @@ Example::
 
     @wrapper_tag.register_tag(register)
     class ExampleTag(wrapper_tag.Tag):
+
         title = wrapper_tag.Keyword(help_text=('title for example tag'))
+
         class Meta:
             template = "<div{{ title__rendered }}>{{ content }}</div>"
+
         def render_title(self, argument, data, context):
             if argument.name not in data:
                 return
