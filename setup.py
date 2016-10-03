@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import re
 import sys
 
 try:
@@ -8,7 +9,9 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = open('VERSION').read().strip()
+__version__ = re.search(
+    "__version__[\s]*=[\s]*(.*)[\s]*",
+    open('wrapper_tag/__init__.py').read()).group(1).strip('"\'')
 
 if sys.argv[-1] == 'publish':
     try:
@@ -23,7 +26,7 @@ if sys.argv[-1] == 'publish':
 
 if sys.argv[-1] == 'tag':
     print("Tagging the version on git:")
-    os.system("git tag -a %s -m 'version %s'" % (version, version))
+    os.system("git tag -a %s -m 'version %s'" % (__version__, __version__))
     os.system("git push --tags")
     sys.exit()
 
@@ -32,13 +35,14 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='django-wrapper-tag',
-    version=version,
+    version=__version__,
     description="""Wrapping template tag for django""",
     long_description=readme + '\n\n' + history,
     author='Peter Vrba',
     author_email='phonkee@phonkee.eu',
     url='https://github.com/phonkee/django-wrapper-tag',
     packages=[
+        'wrapper_tag'
     ],
     include_package_data=True,
     install_requires=[

@@ -1,5 +1,4 @@
 from __future__ import unicode_literals, print_function, absolute_import
-import pkg_resources  # part of setuptools
 from wrapper_tag.arguments import Keyword, KeywordGroup, Event, Method
 from wrapper_tag.rendered import RenderedTag
 from wrapper_tag.tag import Tag
@@ -8,7 +7,7 @@ from logging import getLogger
 from django.core.exceptions import ImproperlyConfigured
 
 # read version from setuptools
-__version__ = pkg_resources.require("django-wrapper-tag")[0].version
+__version__ = "0.1.7"
 
 default_app_config = 'wrapper_tag.apps.WrapperTagConfig'
 
