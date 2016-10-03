@@ -385,20 +385,6 @@ class Event(Argument):
         """
         super(Event, self).contribute_to_class(tag_cls, name)
 
-        # add callback
-        tag_cls.add_rendered_tag_callback(self.rendered_tag_callback, id='__events_patched')
-
-    @classmethod
-    def rendered_tag_callback(cls, tag_cls, rendered_tag, data, context):
-        """
-        Callback when tag is rendered.
-        :param tag_cls:
-        :param rendered_tag:
-        :param data:
-        :param context:
-        :return:
-        """
-
 
 class Method(Argument):
 

@@ -4,6 +4,7 @@ import copy
 from collections import OrderedDict
 
 from django.core.exceptions import ImproperlyConfigured
+from django.dispatch import Signal
 from django.template.exceptions import TemplateSyntaxError
 from django.template import Node
 from django.utils import six
@@ -133,6 +134,10 @@ class TagMetaclass(type):
         # Add arguments to tag class
         cls.arguments = copy.deepcopy(cls._declared_arguments)
 
+        # signals
+        cls.on_data = Signal(providing_args=["data", "context"])
+        cls.on_rendered_tag = Signal(providing_args=["rendered_tag", "data", "context"])
+
         super(TagMetaclass, cls).__init__(name, bases, attrs)
 
         # contribute argument to tag class
@@ -151,8 +156,11 @@ class BaseTag(object):
     varname = None
     nodelist = None
     data_callbacks = []
-    rendered_tag_callbacks = []
     arguments = []
+
+    # signals
+    on_data = None
+    on_rendered_tag = None
 
     def __init__(self, parser, token):
         """
@@ -163,7 +171,6 @@ class BaseTag(object):
 
         # empty data_callbacks
         self.data_callbacks = []
-        self.rendered_tag_callbacks = []
 
         # parse here all args, kwargs...
         self.nodelist = parser.parse((self.options.end_tag,))
@@ -189,20 +196,6 @@ class BaseTag(object):
         :return:
         """
         cls.data_callbacks.append(data_callback)
-
-    @classmethod
-    def add_rendered_tag_callback(cls, rt_callback, id=None):
-        """
-        Adds single data_callback function to tag class
-        :param data_callback:
-        :return:
-        """
-        if id is not None:
-            if cls.rtc_ids.get(id):
-                return
-            else:
-                cls.rtc_ids[id] = True
-        cls.rendered_tag_callbacks.append(rt_callback)
 
     def get_tag_data(self, context):
         """
@@ -234,8 +227,8 @@ class BaseTag(object):
                 self.options.start_tag, kwargs.keys()))
 
         # update data
-        for data_callback in self.data_callbacks:
-            tag_data = data_callback(self, tag_data)
+        # @TODO: provide debugging for signals
+        self.on_data.send_robust(sender=self.__class__, data=tag_data, context=context)
 
         # render all arguments
         for _, argument in six.iteritems(self.arguments):
@@ -268,8 +261,10 @@ class BaseTag(object):
         if not isinstance(rendered_tag, rendered.RenderedTag):
             rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag)
 
-        # add arguments to tag
-        self.rendered_tag_callback(rendered_tag, tag_kwargs, context)
+        # send signal
+        # @TODO: provide debugging of signals (iterate over result)
+        result = self.on_rendered_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag,
+                                                  data=tag_kwargs, context=context)
 
         # stored to context under self.varname
         if self.varname:
@@ -306,22 +301,6 @@ class BaseTag(object):
                                            self.options.start_tag))
             tmp = template.render(context)
         return rendered.RenderedTag(tmp, self.options.start_tag)
-
-    @classmethod
-    def rendered_tag_callback(cls, rendered_tag, data, context):
-        """
-        This callback is called after tag has been rendered
-        :param rendered_tag:
-        :param data:
-        :param context:
-        :return:
-        """
-
-        for callback in cls.rendered_tag_callbacks:
-            callback(cls, rendered_tag, data, context)
-
-        # store arguments data to rendered tag
-        rendered_tag.data['arguments'] = data
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):

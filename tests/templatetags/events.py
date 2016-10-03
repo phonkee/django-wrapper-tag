@@ -11,11 +11,10 @@ class MyEvent(wrapper_tag.Keyword):
     def contribute_to_class(self, tag_cls, name):
         super(MyEvent, self).contribute_to_class(tag_cls, name)
 
-        # add callback just once
-        tag_cls.add_rendered_tag_callback(self.rendered_tag_callback, id="events")
+        # bound to signal
+        tag_cls.on_rendered_tag.connect(self.on_rendered_tag, dispatch_uid="events")
 
-    @classmethod
-    def rendered_tag_callback(cls, tag_cls, rendered_tag, data, context):
+    def on_rendered_tag(self, sender, rendered_tag, data, context, **kwargs):
         """
         Collect all events and expose them to rendered tag
         :param tag_cls:
@@ -24,9 +23,9 @@ class MyEvent(wrapper_tag.Keyword):
         :param context:
         :return:
         """
+
         events = {}
-        print(data)
-        for _, argument in six.iteritems(tag_cls.arguments):
+        for _, argument in six.iteritems(sender.arguments):
 
             value = data.get(argument.name)
             if not value:
