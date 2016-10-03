@@ -145,7 +145,6 @@ class TagMetaclass(type):
             argument.logger = utils.get_sub_logger(cls.logger, argument.name)
             argument.contribute_to_class(cls, name)
 
-
 # noinspection PyUnresolvedReferences
 class BaseTag(object):
     """
@@ -244,7 +243,7 @@ class BaseTag(object):
 
         # check if render_tag returned RenderedTag, if not wrap the text into it
         if not isinstance(rendered_tag, rendered.RenderedTag):
-            rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag)
+            rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag, arguments=tag_kwargs)
 
         # dispatch on_rendered_tag
         self.__dispatch_on_rendered_tag(rendered_tag, tag_kwargs, context)
@@ -256,8 +255,10 @@ class BaseTag(object):
             except KeyError:
                 pass
             else:
-                if utils.is_template_debug():
-                    raise TemplateSyntaxError('variable {} already exists on context'.format(self.varname))
+                pass
+                # This should be removed because what if we are in for cycle?
+                # if utils.is_template_debug():
+                #     raise TemplateSyntaxError('variable {} already exists on context'.format(self.varname))
 
             # store value to context and push one context
             context[self.varname] = rendered_tag
@@ -283,7 +284,7 @@ class BaseTag(object):
                 raise ImproperlyConfigured("tag: {}, error: please provide meta.template_name or meta.template".format(
                                            self.options.start_tag))
             tmp = template.render(context)
-        return rendered.RenderedTag(tmp, self.options.start_tag)
+        return rendered.RenderedTag(tmp, self.options.start_tag, arguments=tag_kwargs)
 
     def __dispatch_on_data(self, data, context):
         """
