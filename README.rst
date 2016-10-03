@@ -15,7 +15,6 @@ arguments group in declarative way, and provide multiple steps of template rende
 
 Example::
 
-```python
     from django import template
     register = template.Library()
 
@@ -28,7 +27,6 @@ Example::
             if argument.name not in data:
                 return
             return ' title="{title}"'.format(data[argument.name])
-```
 
 And then simply use tag in template::
 
