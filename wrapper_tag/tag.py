@@ -90,13 +90,6 @@ class TagMetaclass(type):
         current_arguments.sort(key=lambda x: x[1].creation_counter)
 
         attrs['_declared_arguments'] = OrderedDict(current_arguments)
-        attrs['rtc_ids'] = {}
-
-        # # set _decorated_function for template Library.tag so it gets correct name for tag.
-        # def fake_func():
-        #     pass  # pragma: no cover
-        # fake_func.__name__ = options.start_tag
-        # attrs['_decorated_function'] = fake_func
         attrs['name'] = options.start_tag
 
         # create new class
