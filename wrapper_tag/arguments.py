@@ -169,7 +169,14 @@ class Argument(utils.TemplateMixin):
         """
         if self.readonly:
             return self.default
-        return kwargs.pop(self.name, self.default)
+        result = kwargs.pop(self.name, self.default)
+
+        # if __raw__<name> was provided we use it as raw value (probably inherited from parent)
+        # be careful though and use this just in situations you want to pass all values from parent
+        if self.raw_key in kwargs:
+            result = kwargs.pop(self.raw_key)
+
+        return result
 
     def clean(self, tag, value):
         """
@@ -212,6 +219,10 @@ class Argument(utils.TemplateMixin):
             doc = '{} - {}'.format(doc, self.help_text)
 
         return doc
+
+    @property
+    def raw_key(self):
+        return '__raw__{}'.format(self.name)
 
 
 class Keyword(Argument):

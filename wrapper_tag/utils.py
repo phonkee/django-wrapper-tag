@@ -241,7 +241,7 @@ def register_tag(library, **kwargs):
     :param kwargs:
     :return:
 
-    @TODO: update docs for given wrapper tag
+    @TODO: Add support for aliases.
     """
 
     def get_library_name(cls):

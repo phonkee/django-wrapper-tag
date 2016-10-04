@@ -236,7 +236,8 @@ class BaseTag(object):
         self.logger.debug("Rendering with: %s", tag_kwargs)
 
         # render content which is isolated from tag data
-        tag_kwargs['content'] = self.nodelist.render(context)
+        with context.push(parent=tag_kwargs):
+            tag_kwargs['content'] = self.nodelist.render(context)
 
         # render tag to variable
         rendered_tag = self.render_tag(tag_kwargs, context)
