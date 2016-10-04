@@ -1,9 +1,12 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
+import copy
 import re
 
+import six
 from django.core.exceptions import ValidationError
 from django.template import TemplateSyntaxError, Context
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from wrapper_tag import utils
@@ -11,6 +14,10 @@ from wrapper_tag import docgen
 
 # regex type for isinstance
 REGEX_TYPE = type(re.compile(''))
+
+
+RENDER_METHOD_TAG = 1
+RENDER_METHOD_ARGUMENT = 2
 
 
 class Argument(utils.TemplateMixin):
@@ -33,6 +40,8 @@ class Argument(utils.TemplateMixin):
     _tag_render_method = None
     validators = None
     extra_data = None
+
+    render_method_type = None
 
     # default doc_group
     doc_group = docgen.ArgumentsGroup(_('Arguments'), help_text=_('Group of generic arguments'))
@@ -96,9 +105,13 @@ class Argument(utils.TemplateMixin):
 
     @property
     def default(self):
+        """
+        Default must be copied.
+        :return:
+        """
         if callable(self._default):
-            return self._default(self)
-        return self._default
+            return copy.deepcopy(self._default(self))
+        return copy.deepcopy(self._default)
 
     @default.setter
     def default(self, value):
@@ -134,19 +147,13 @@ class Argument(utils.TemplateMixin):
             setattr(tag_cls, self.tag_clean_method, _clean_argument_)
 
         # check if render_<argument> method is defined on tag, if not assign `render`
+        # @TODO: check arguments of render method
         trm = getattr(tag_cls, self.tag_render_method, None)
         if trm is None:
-            def render_method(wrapped):
-                """
-                Wrap method so we pop first argument
-                :param wrapped:
-                :return:
-                """
-                def inner(tag, argument, data, context):
-                    return wrapped(data, context)
-                return inner
-            setattr(tag_cls, self.tag_render_method, render_method(self.render))
+            self.render_method_type = RENDER_METHOD_ARGUMENT
         else:
+            self.render = trm
+            self.render_method_type = RENDER_METHOD_TAG
             # verify data_callback signature
             if utils.is_template_debug():
                 utils.verify_func_signature(trm, 'argument', 'data', 'context', exact_names=True,
@@ -202,9 +209,12 @@ class Argument(utils.TemplateMixin):
         :param data:
         :return:
         """
-        return getattr(tag, self.tag_render_method)(self, data, context)
+        if self.render_method_type == RENDER_METHOD_TAG:
+            return self.render(tag, self, data, context)
+        elif self.render_method_type == RENDER_METHOD_ARGUMENT:
+            return self.render(tag, data, context)
 
-    def render(self, data, context):
+    def render(self, tag, data, context):
         """
         Rendering function
         :param data:
@@ -399,3 +409,37 @@ class Method(Argument):
     # default doc_group
     doc_group = docgen.ArgumentsGroup(_('Methods'), help_text=_('Methods that are available on rendered '
                                                                 'tag `methods` dictionary'), priority=0)
+
+
+class Hyperlink(KeywordGroup):
+    """
+    Hyperlink argument groups functionality for plain href and also for url reversing abilities
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['source'] = ('href', 'url', 'url_kwarg_*', 'url_arg_*', 'url_query')
+        kwargs['default'] = {
+            'href': '#'
+        }
+        super(Hyperlink, self).__init__(*args, **kwargs)
+
+    def render(self, argument, data, context):
+        """
+        Return rendered hyperlink
+        :param data: tag data
+        :param context: render context
+        :return:
+        """
+        value = data[self.name]
+
+        if 'url' in value:
+            kwarg_keys = utils.find_elements('url_kwarg_*', value.keys())
+            arg_keys = utils.find_elements('url_arg_*', sorted(value.keys()))
+            url_kwargs = {k.lstrip('url_kwarg_'): v for k, v in six.iteritems(value) if k in kwarg_keys}
+            url_args = [value[v] for v in arg_keys]
+
+            rev = reverse(value['url'], args=url_args, kwargs=url_kwargs)
+            if 'url_query' in value and value['url_query']:
+                rev = '{}?{}'.format(rev, value['url_query'])
+            return rev
+        return value['href']

@@ -4,7 +4,7 @@ from wrapper_tag.rendered import RenderedTag
 from wrapper_tag.tag import Tag
 from wrapper_tag.utils import register_tag
 
-__version__ = "0.1.12"
+__version__ = "0.1.13"
 
 default_app_config = 'wrapper_tag.apps.WrapperTagConfig'
 

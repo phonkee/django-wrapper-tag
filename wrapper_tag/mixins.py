@@ -161,46 +161,7 @@ class Hyperlink(object):
     """
     Adds ability to provide href functionality
     """
-    href = arguments.Keyword(help_text=_('raw href (url takes precedence)'))
-    url = arguments.KeywordGroup(('url', 'url_kwarg_*', 'url_arg_*'),
-                                 help_text=_('if provided, href will be set with call to url reverse'))
-    url_query = arguments.Keyword(help_text=_('if provided, will be added as url query params.'))
-
-    def render_href(self, argument, data, context=None):
-        """
-        custom href rendering
-        :param attribute:
-        :param data:
-        :return:
-        """
-        if 'url' in data and 'reversed' in data['url']:
-            return format_html('href="{reversed}"'.format(**data['url']))
-
-        if 'href' in data and data['href']:
-            return format_html('href="{href}"'.format(**data))
-
-    def clean_url(self, argument, data):
-        """
-        clean_url tries to resolve given url
-
-        @TODO: fix this
-        :param argument:
-        :param data:
-        :return:
-        """
-
-        if 'url' not in data:
-            return data
-
-        kwarg_keys = utils.find_elements('url_kwarg_*', data.keys())
-        arg_keys = utils.find_elements('url_arg_*', sorted(data.keys()))
-        url_kwargs = {k.lstrip('url_kwarg_'): v for k, v in six.iteritems(data) if k in kwarg_keys}
-        url_args = [data[v] for v in arg_keys]
-
-        data['reversed'] = reverse(data['url'], args=url_args, kwargs=url_kwargs)
-        if 'url_query' in data and data['url_query']:
-            data['reversed'] = '{}?{}'.format(data['reversed'], data['url_query'])
-        return data
+    href = arguments.Hyperlink(help_text=_('raw href (url takes precedence)'))
 
 
 class Size(object):

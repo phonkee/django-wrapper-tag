@@ -162,6 +162,7 @@ class BaseTag(object):
         :param parser:
         :param token:
         """
+
         # parse here all args, kwargs...
         self.nodelist = parser.parse((self.options.end_tag,))
 
