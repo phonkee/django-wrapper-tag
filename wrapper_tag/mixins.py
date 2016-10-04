@@ -203,21 +203,6 @@ class Hyperlink(object):
         return data
 
 
-class Icon(object):
-
-    icon = arguments.Keyword(default='', help_text=_('fontawesome icon name (e.g. `user`)'))
-
-    def render_icon(self, argument, data, context=None):
-        # hack for now
-        # data['iconset'] = 'fa'
-        # print '<i class="{iconset} {iconset}-{name}"></i>'.format(**data)
-        # @TODO: check this code
-        # self.logger.debug("this is icon data %s", data)
-
-        if 'icon' in data and data['icon']:
-            return format_html('<i class="fa fa-{}"></i>', data['icon'])
-
-
 class Size(object):
 
     size = arguments.KeywordGroup(('xs', 'sm', 'md', 'lg'))

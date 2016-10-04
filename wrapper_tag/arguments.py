@@ -136,7 +136,16 @@ class Argument(utils.TemplateMixin):
         # check if render_<argument> method is defined on tag, if not assign `render`
         trm = getattr(tag_cls, self.tag_render_method, None)
         if trm is None:
-            setattr(tag_cls, self.tag_render_method, self.render)
+            def render_method(wrapped):
+                """
+                Wrap method so we pop first argument
+                :param wrapped:
+                :return:
+                """
+                def inner(tag, argument, data, context):
+                    return wrapped(data, context)
+                return inner
+            setattr(tag_cls, self.tag_render_method, render_method(self.render))
         else:
             # verify data_callback signature
             if utils.is_template_debug():
@@ -195,7 +204,7 @@ class Argument(utils.TemplateMixin):
         """
         return getattr(tag, self.tag_render_method)(self, data, context)
 
-    def render(self, argument, data, context):
+    def render(self, data, context):
         """
         Rendering function
         :param data:
