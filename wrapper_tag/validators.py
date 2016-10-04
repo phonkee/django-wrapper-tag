@@ -3,6 +3,32 @@ from django.core.validators import *
 from django.utils.encoding import smart_text, python_2_unicode_compatible
 
 
+def any(*validators):
+    """
+    shorthand for AnyValidator
+    :param validators:
+    :return:
+    """
+    return AnyValidator(*validators)
+
+
+def requires_tag(*tags):
+    """
+    shorthand for RequiresTagValidator
+    :param tags:
+    :return:
+    """
+    return RequiresTagValidator(*tags)
+
+
+def string():
+    """
+    shorthand for StringValidator
+    :return:
+    """
+    return StringValidator()
+
+
 @python_2_unicode_compatible
 class AnyValidator(object):
 
