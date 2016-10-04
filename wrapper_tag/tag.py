@@ -133,10 +133,13 @@ class TagMetaclass(type):
 
         super(TagMetaclass, cls).__init__(name, bases, attrs)
 
+        argument_logger = getLogger(cls.logger.name + "_arguments")
+
         # contribute argument to tag class
         for name, argument in six.iteritems(cls.arguments):
-            argument.logger = utils.get_sub_logger(cls.logger, argument.name)
+            argument.logger = utils.get_sub_logger(argument_logger, argument.name)
             argument.contribute_to_class(cls, name)
+
 
 # noinspection PyUnresolvedReferences
 class BaseTag(object):

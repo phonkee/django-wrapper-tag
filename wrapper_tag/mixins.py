@@ -305,16 +305,18 @@ class ColorMixin(object):
             return
         return 'txt-color-{}'.format(value)
 
+    def get_color_class(self, value, prefix='txt'):
+        if not value:
+            return
+        return '{}-color-{}'.format(prefix, value)
+
 
 class BackgroundColorMixin(ColorMixin):
 
     bg_color = arguments.Keyword(choices=ColorMixin.AVAILABLE_COLORS)
 
     def render_bg_color(self, argument, data, context):
-        value = data.get(argument.name, None)
-        if not value:
-            return value
-        return self.get_bg_color_css_class(value)
+        return self.get_color_class(data.get(argument.name, None), 'bg')
 
 
 class TextColorMixin(ColorMixin):
@@ -329,19 +331,16 @@ class TextColorMixin(ColorMixin):
 
     text_color = arguments.Keyword(choices=AVAILABLE_COLORS)
 
-    def render_text_color(self, argument, data, context=None):
-        value = data.get(argument.name, None)
-        if not value:
-            return
-        return self.get_text_color_css_class(value)
+    def render_text_color(self, argument, data, context):
+        return self.get_color_class(data.get(argument.name, None), 'txt')
 
 
 class ModalJsEvents(JsEvents):
     js_events = arguments.KeywordGroup(('on_show', 'on_after_show', 'on_hide', 'on_after_hide', 'on_data_load'),
-                                  extra_data={
-                                      'on_show': '{object}.on("show.bs.modal", {function});',
-                                      'on_after_show': '{object}.on("shown.bs.modal", {function});',
-                                      'on_hide': '{object}.on("hide.bs.modal", {function});',
-                                      'on_after_hide': '{object}.on("hidden.bs.modal", {function});',
-                                      'on_data_load': '{object}.on("loaded.bs.modal", {function});',
-                                  })
+                                       extra_data={
+                                           'on_show': '{object}.on("show.bs.modal", {function});',
+                                           'on_after_show': '{object}.on("shown.bs.modal", {function});',
+                                           'on_hide': '{object}.on("hide.bs.modal", {function});',
+                                           'on_after_hide': '{object}.on("hidden.bs.modal", {function});',
+                                           'on_data_load': '{object}.on("loaded.bs.modal", {function});',
+                                       })
