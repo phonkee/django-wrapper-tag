@@ -97,7 +97,7 @@ class Argument(utils.TemplateMixin):
     @property
     def default(self):
         if callable(self._default):
-            return self._default()
+            return self._default(self)
         return self._default
 
     @default.setter
@@ -107,7 +107,7 @@ class Argument(utils.TemplateMixin):
     @property
     def choices(self):
         if callable(self._choices):
-            return self._choices()
+            return self._choices(self)
         return self._choices
 
     @choices.setter
@@ -297,11 +297,7 @@ class KeywordGroup(Argument):
             source = [source]
 
         for item in source:
-            if isinstance(item, REGEX_TYPE):
-                self.source.append((item.pattern, item.flags))
-            else:
-                pattern = '^{}$'.format(item.replace('+', '.+').replace('*', '.*'))
-                self.source.append((pattern, 0))
+            self.source.append(item)
 
     @property
     def compiled_source(self):
@@ -310,7 +306,7 @@ class KeywordGroup(Argument):
         :return:
         """
         for item in self.source:
-            yield re.compile(item[0], item[1])
+            yield re.compile('^{}$'.format(item.replace('+', '.+').replace('*', '.*')))
 
     def is_source(self, source):
         """

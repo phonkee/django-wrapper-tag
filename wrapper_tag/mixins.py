@@ -153,7 +153,7 @@ class Tag(object):
     TAG_CHOICES = ['div']
     TAG_DEFAULT = 'div'
 
-    tag = arguments.Keyword(help_text='tag', choices=lambda: Tag.TAG_CHOICES, default=lambda: Tag.TAG_DEFAULT,
+    tag = arguments.Keyword(help_text='tag', choices=lambda x: Tag.TAG_CHOICES, default=lambda x: Tag.TAG_DEFAULT,
                             tag_render_method="render_html_tag")
 
 
