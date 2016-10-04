@@ -26,18 +26,17 @@ class TagAttributes(object):
         return mark_safe(full)
 
 
-def id_data_callback(tag, data):
+def id_data_callback(data, **kwargs):
     """
     Add id to attrs
     """
     if 'attrs' in data:
         data['attrs']['id'] = data['id']
-    return data
 
 
 class Identity(TagAttributes):
 
-    id = arguments.Keyword(data_callback=id_data_callback)
+    id = arguments.Keyword(on_data=id_data_callback)
     name = arguments.Keyword()
 
     def clean_id(self, argument, value):
@@ -63,13 +62,12 @@ class Identity(TagAttributes):
             return format_html('name="{name}"', **data)
 
 
-def css_class_data_callback(tag, data):
+def css_class_data_callback(data, **kwargs):
     """
     Check if TagAttributes
     """
     if 'attrs' in data and 'css_class' in data:
         data['attrs']['class'] = data['css_class']
-    return data
 
 
 class CssClass(object):
@@ -77,7 +75,7 @@ class CssClass(object):
     Adds ability to set cusom css_class
     """
     css_class = arguments.Keyword(default='', help_text='Additional css class (e.g. ``"class1 class2"``)',
-                                  data_callback=css_class_data_callback)
+                                  on_data=css_class_data_callback)
 
 
 """
@@ -178,14 +176,14 @@ class Size(object):
         return format_html('col-{key}-{value}'.format(key=key, value=value))
 
 
-def tooltip_contribute_data(tag, data):
+def tooltip_contribute_data(data, **kwargs):
     """
     @TODO: fix this
     :param tag:
     :param data:
     :return:
     """
-    return data
+    return
 
     value = data['tag']
 
@@ -216,7 +214,7 @@ class Tooltip(Data):
                                     validators.RequiresTagValidator('tooltip'),
                                     validators.StringValidator()
                                 ),
-                                data_callback=tooltip_contribute_data
+                                on_data=tooltip_contribute_data
                                 )
 
 

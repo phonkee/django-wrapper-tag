@@ -34,7 +34,6 @@ class Argument(utils.TemplateMixin):
     _choices = None
     _default = None
 
-    data_callback = None
     help_text = None
     readonly = False
     _tag_render_method = None
@@ -43,16 +42,19 @@ class Argument(utils.TemplateMixin):
 
     render_method_type = None
 
+    # signals
+    on_data = None
+
     # default doc_group
     doc_group = docgen.ArgumentsGroup(_('Arguments'), help_text=_('Group of generic arguments'))
 
-    def __init__(self, help_text=None, data_callback=None, readonly=False, default=None,
+    def __init__(self, help_text=None, on_data=None, readonly=False, default=None,
                  validators=None, extra_data=None, choices=None, tag_render_method=None, **kwargs):
         # Increase the creation counter, and save our local copy.
         self.creation_counter = Argument.creation_counter
         Argument.creation_counter += 1
 
-        self.data_callback = self._get_data_callback(data_callback)
+        self.on_data = on_data
         self.extra_data = extra_data or {}
         self.help_text = help_text
         self.readonly = readonly
@@ -66,19 +68,6 @@ class Argument(utils.TemplateMixin):
         self._choices = choices
 
         super(Argument, self).__init__(**kwargs)
-
-    def _get_data_callback(self, data_callback):
-        """
-        Returns data_callback from value
-
-        @TODO: this does not work as string since we need to set data_callback from upper class (tag)
-        :return:
-        """
-
-        if not data_callback:
-            return None
-
-        return data_callback
 
     def __repr__(self):
         """
@@ -158,6 +147,15 @@ class Argument(utils.TemplateMixin):
             if utils.is_template_debug():
                 utils.verify_func_signature(trm, 'argument', 'data', 'context', exact_names=True,
                                             prefix="{}.{}, ".format(tag_cls.__name__, self.name))
+
+        # on_data signal receiver
+        if self.on_data:
+            if callable(self.on_data):
+                tag_cls.on_data.connect(self.on_data)
+            else:
+                on_data = getattr(tag_cls, self.on_data, None)
+                if on_data and callable(on_data):
+                    tag_cls.on_data.connect(on_data)
 
     def full_clean(self, tag, value):
         """

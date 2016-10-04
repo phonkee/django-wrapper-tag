@@ -13,7 +13,7 @@ from wrapper_tag import utils
 from wrapper_tag import arguments
 from wrapper_tag import rendered
 
-from logging import getLogger, DEBUG
+from logging import getLogger, ERROR, INFO
 
 
 logger = getLogger('wrapper_tag.tags')
@@ -43,6 +43,7 @@ class TagOptions(utils.TemplateMixin):
         self.as_var_only = bool(getattr(options, 'as_var_only', False))
         self.aliases = getattr(options, 'aliases', [])
         self.tag_name = tag_name
+        self.class_prepared = getattr(options, 'class_prepared', 'class_prepared')
 
         super(TagOptions, self).__init__(template=getattr(options, 'template', None),
                                          template_name=getattr(options, 'template_name', None))
@@ -140,6 +141,17 @@ class TagMetaclass(type):
             argument.logger = utils.get_sub_logger(argument_logger, argument.name)
             argument.contribute_to_class(cls, name)
 
+        # fire class_prepared
+        try:
+            if callable(cls.options.class_prepared):
+                cls.options.class_prepared()
+            else:
+                class_prepared = getattr(cls, cls.options.class_prepared, None)
+                if class_prepared and callable(class_prepared):
+                    class_prepared()
+        except Exception as e:
+            cls.logger.error("class_prepared raised exception: %s", e)
+
 
 # noinspection PyUnresolvedReferences
 class BaseTag(object):
@@ -230,6 +242,10 @@ class BaseTag(object):
         * iterate over all arguments and call get_tag_value
         """
         tag_kwargs = self.get_tag_data(context)
+
+        if self.logger.isEnabledFor(INFO):
+            self.logger.info("Rendering with: %s", tag_kwargs.keys())
+
         self.logger.debug("Rendering with: %s", tag_kwargs)
 
         # render content which is isolated from tag data
@@ -238,6 +254,8 @@ class BaseTag(object):
 
         # render tag to variable
         rendered_tag = self.render_tag(tag_kwargs, context)
+
+        self.logger.debug("Rendered: %s", rendered_tag)
 
         # check if render_tag returned RenderedTag, if not wrap the text into it
         if not isinstance(rendered_tag, rendered.RenderedTag):
@@ -265,7 +283,7 @@ class BaseTag(object):
             return ''
 
         # check if tag is intended as_var_only (can be only stored to variable, not print directly
-        if self.options.as_var_only and not self.varname and is_template_debug():
+        if self.options.as_var_only and not self.varname and utils.is_template_debug():
             raise ImproperlyConfigured('Tag `{}` must be assigned to variable using `as variable`.'.format(
                 self.options.start_tag))
 
@@ -293,10 +311,11 @@ class BaseTag(object):
         """
         result = self.on_data.send_robust(sender=self.__class__, data=data, context=context)
 
-        if self.logger.isEnabledFor(DEBUG):
+        if self.logger.isEnabledFor(ERROR):
             for method, error in result:
                 if error:
-                    self.logger.error('on_rendered_tag: %s, returned error: %s', method, error)
+                    self.logger.error('on_rendered_tag: %s, returned error', method)
+                    self.logger.exception(error)
 
     def __dispatch_on_rendered_tag(self, rendered_tag, data, context):
         """
@@ -309,10 +328,11 @@ class BaseTag(object):
         result = self.on_rendered_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag, data=data,
                                                   context=context)
 
-        if self.logger.isEnabledFor(DEBUG):
+        if self.logger.isEnabledFor(ERROR):
             for method, error in result:
                 if error:
-                    self.logger.error('on_rendered_tag: %s, returned error: %s', method, error)
+                    self.logger.error('on_rendered_tag: %s, returned error', method)
+                    self.logger.exception(error)
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):

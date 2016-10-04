@@ -18,6 +18,7 @@ from distutils.version import LooseVersion
 
 from django.utils import inspect
 from django.utils import six
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
 
 from logging import getLogger
@@ -297,3 +298,22 @@ def register_tag(library, **kwargs):
         return cls
 
     return wrap
+
+
+@python_2_unicode_compatible
+class StringSet(set):
+    """
+    StringSet is set that provides method to return string value.
+    """
+
+    def __str__(self):
+        return " ".join(self)
+
+    def __repr__(self):
+        return "'{}'".format(str(self))
+
+    def add(self, value):
+        for v in value.split(" "):
+            if not v:
+                continue
+            super(StringSet, self).add(v)
