@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, print_function
 from django.core.validators import *
+from django.db import models
 from django.utils.encoding import smart_text, python_2_unicode_compatible
 
 
@@ -10,6 +11,15 @@ def any(*validators):
     :return:
     """
     return AnyValidator(*validators)
+
+
+def model_instance(*models):
+    """
+    shorthand to ModelInstance validator
+    :param models:
+    :return:
+    """
+    return ModelInstance(*models)
 
 
 def requires_tag(*tags):
@@ -111,3 +121,27 @@ class StringValidator(object):
 
     def __str__(self):
         return 'value must be string'
+
+
+@python_2_unicode_compatible
+class ModelInstance(object):
+
+    models = None
+
+    def __init__(self, *models):
+        self.models = models
+
+    def __call__(self, value):
+        if not isinstance(value, models.Model):
+            raise ValidationError('value not model instance')
+
+        if self.models:
+            for model in self.models:
+                if isinstance(value, model):
+                    return True
+            raise ValidationError('value not model instance')
+
+    def __str__(self):
+        return 'value must be instance of: %s'.format(self.models)
+
+
