@@ -371,13 +371,12 @@ class KeywordGroup(Argument):
 
     def gen_doc(self):
         doc = super(KeywordGroup, self).gen_doc()
-        source = ['"{}"'.format(x[0]) for x in self.source]
-        if source:
-            doc = '{}\n    * source - [{}]'.format(doc, ", ".join(source))
+        if self.source:
+            doc = '{}\n    * source - {}'.format(doc, ", ".join(self.source))
         if self.choices:
             doc = '{}\n    * choices - {}'.format(doc, self.choices)
         if self.default:
-            doc = '{}\n    * default - {}'.format(doc, self.default)
+            doc = '{}\n    * default:: ``{}``'.format(doc, self.default)
         return doc
 
 

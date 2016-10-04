@@ -1,10 +1,8 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import random
-import re
 
 import six
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -36,8 +34,8 @@ def id_data_callback(data, **kwargs):
 
 class Identity(TagAttributes):
 
-    id = arguments.Keyword(on_data=id_data_callback)
-    name = arguments.Keyword()
+    id = arguments.Keyword(on_data=id_data_callback, help_text=_('html id attribute'))
+    name = arguments.Keyword(help_text=_('html name attribute'))
 
     def clean_id(self, argument, value):
         """
@@ -151,7 +149,7 @@ class Tag(object):
     TAG_CHOICES = ['div']
     TAG_DEFAULT = 'div'
 
-    tag = arguments.Keyword(help_text='tag', choices=lambda x: Tag.TAG_CHOICES, default=lambda x: Tag.TAG_DEFAULT,
+    tag = arguments.Keyword(help_text='tag of html element', choices=lambda x: Tag.TAG_CHOICES, default=lambda x: Tag.TAG_DEFAULT,
                             tag_render_method="render_html_tag")
 
 

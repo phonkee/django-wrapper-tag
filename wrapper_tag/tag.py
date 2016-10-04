@@ -74,7 +74,16 @@ class TagMetaclass(type):
     """
 
     def __new__(mcs, name, bases, attrs):
-        options = TagOptions(attrs.get('Meta', None), tag_name=name)
+        meta = attrs.get('Meta', None)
+
+        # if Meta not found on class, try to find on base classes
+        if not meta:
+            for base in reversed(bases):
+                meta = getattr(base, 'Meta', None)
+                if meta:
+                    break
+
+        options = TagOptions(meta, tag_name=name)
         current_arguments = []
 
         # add logger if not provided
