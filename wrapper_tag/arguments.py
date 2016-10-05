@@ -11,6 +11,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from wrapper_tag import utils
 from wrapper_tag import docgen
+from wrapper_tag import validators
+from wrapper_tag.rendered import RenderedTag, SCRIPT_TAG
 
 # regex type for isinstance
 REGEX_TYPE = type(re.compile(''))
@@ -452,6 +454,14 @@ class Event(Argument):
     doc_group = docgen.ArgumentsGroup(_('Events'), help_text=_('Event handlers that are available on rendered '
                                                                'tag `events` dictionary'), priority=0)
 
+    def __init__(self, *args, **kwargs):
+        kwargs['validators'] = kwargs.pop('validators', [])
+        kwargs['validators'].append(validators.any(
+            validators.requires_tag(SCRIPT_TAG),
+            validators.string(),
+        ))
+        super(Event, self).__init__(*args, **kwargs)
+
     def contribute_to_class(self, tag_cls, name):
         """
         Patch render_wrapper_tag method on tag, to set 'events' on RenderedTag
@@ -518,7 +528,7 @@ class Method(Argument):
                 continue
 
             if argument.rendered_key in data:
-                rendered_tag['methods'][argument.name] = data[argument.rendered_key]
+                rendered_tag['methods'][argument.name] = RenderedTag(data[argument.rendered_key], SCRIPT_TAG)
 
 
 class Hyperlink(KeywordGroup):

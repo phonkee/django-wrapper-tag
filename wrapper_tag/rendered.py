@@ -2,6 +2,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from django.utils.encoding import python_2_unicode_compatible
 
+SCRIPT_TAG = 'script'
+
 
 @python_2_unicode_compatible
 class RenderedTag(dict):
@@ -33,4 +35,7 @@ class RenderedTag(dict):
     def __getattr__(self, attr):
         if attr in self.__dict__:
             return self.__dict__[attr]
-        return self.get[attr]
+        return self[attr]
+
+    def __nonzero__(self):
+        return str(self).strip() != ''
