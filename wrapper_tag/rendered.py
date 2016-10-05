@@ -33,4 +33,4 @@ class RenderedTag(dict):
     def __getattr__(self, attr):
         if attr in self.__dict__:
             return self.__dict__[attr]
-        return self[attr]
+        return self.get[attr]

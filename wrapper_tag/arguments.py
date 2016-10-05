@@ -116,6 +116,10 @@ class Argument(utils.TemplateMixin):
     def choices(self, value):
         self._choices = value
 
+    @property
+    def rendered_key(self):
+        return '{}__rendered'.format(self.name)
+
     def contribute_to_class(self, tag_cls, name):
         """
         Contribute to class
@@ -207,10 +211,12 @@ class Argument(utils.TemplateMixin):
         :param data:
         :return:
         """
-        if self.render_method_type == RENDER_METHOD_TAG:
-            return self.render(tag, self, data, context)
-        elif self.render_method_type == RENDER_METHOD_ARGUMENT:
-            return self.render(tag, data, context)
+
+        with context.push(extra_data=self.extra_data, argument=self):
+            if self.render_method_type == RENDER_METHOD_TAG:
+                return self.render(tag, self, data, context)
+            elif self.render_method_type == RENDER_METHOD_ARGUMENT:
+                return self.render(tag, data, context)
 
     def render(self, tag, data, context):
         """
@@ -219,10 +225,13 @@ class Argument(utils.TemplateMixin):
         :return:
         """
         template = self.template
+
         if not template:
             return utils.NULL
 
-        return template.render(Context(data))
+        with context.push(**data):
+            return template.render(context)
+            # return template.render(Context(data))
 
     def gen_doc(self):
         """
@@ -400,12 +409,64 @@ class Event(Argument):
         """
         super(Event, self).contribute_to_class(tag_cls, name)
 
+        tag_cls.on_rendered_data.connect(self.on_rendered_data, dispatch_uid="events")
+
+    def on_rendered_data(self, sender, data, context, **kwargs):
+        """
+        Add methods to rendered tag, to be accessible from template
+        :param sender:
+        :param data:
+        :param context:
+        :param kwargs:
+        :return:
+        """
+        if 'events__' not in data:
+            data['events__'] = {}
+
+        for _, argument in six.iteritems(sender.arguments):
+            if not isinstance(argument, Event):
+                continue
+
+            if argument.name in data and argument.rendered_key in data:
+                data['events__'][argument.name] = data[argument.rendered_key]
+
 
 class Method(Argument):
 
     # default doc_group
     doc_group = docgen.ArgumentsGroup(_('Methods'), help_text=_('Methods that are available on rendered '
                                                                 'tag `methods` dictionary'), priority=0)
+
+    def contribute_to_class(self, tag_cls, name):
+        """
+        Patch render_wrapper_tag method on tag, to set 'events' on RenderedTag
+        :param tag_cls: tag class
+        :param name:
+        :return:
+        """
+        super(Method, self).contribute_to_class(tag_cls, name)
+
+        tag_cls.on_rendered_tag.connect(self.on_rendered_tag, dispatch_uid="methods")
+
+    def on_rendered_tag(self, sender, rendered_tag, data, context, **kwargs):
+        """
+        Add methods to rendered tag, to be accessible from template
+        :param sender:
+        :param rendered_tag:
+        :param data:
+        :param context:
+        :param kwargs:
+        :return:
+        """
+        if rendered_tag.get('methods', None) is None:
+            rendered_tag['methods'] = {}
+
+        for _, argument in six.iteritems(sender.arguments):
+            if not isinstance(argument, Method):
+                continue
+
+            if argument.rendered_key in data:
+                rendered_tag['methods'][argument.name] = data[argument.rendered_key]
 
 
 class Hyperlink(KeywordGroup):

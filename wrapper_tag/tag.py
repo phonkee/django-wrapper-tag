@@ -140,6 +140,7 @@ class TagMetaclass(type):
         # signals
         cls.on_data = Signal(providing_args=["data", "context"])
         cls.on_rendered_tag = Signal(providing_args=["rendered_tag", "data", "context"])
+        cls.on_rendered_data = Signal(providing_args=["data", "context"])
 
         super(TagMetaclass, cls).__init__(name, bases, attrs)
 
@@ -150,14 +151,34 @@ class TagMetaclass(type):
             argument.logger = utils.get_sub_logger(argument_logger, argument.name)
             argument.contribute_to_class(cls, name)
 
+        # run all class prepared
+        cls.__run_class_prepared(bases)
+
+    def __run_class_prepared(cls, bases):
+
+        for base in reversed(cls.__mro__):
+            try:
+                class_prepared = getattr(base, 'class_prepared', None)
+
+                if class_prepared and callable(class_prepared):
+                    class_prepared()
+            except Exception as e:
+                cls.logger.error("class_prepared raised exception: %s", e)
+
         # fire class_prepared
         try:
             if callable(cls.options.class_prepared):
                 cls.options.class_prepared()
+
+                class_prepared = getattr(cls, 'class_prepared', None)
+                if class_prepared and callable(class_prepared):
+                    class_prepared()
+
             else:
                 class_prepared = getattr(cls, cls.options.class_prepared, None)
                 if class_prepared and callable(class_prepared):
                     class_prepared()
+
         except Exception as e:
             cls.logger.error("class_prepared raised exception: %s", e)
 
@@ -175,6 +196,7 @@ class BaseTag(object):
 
     # signals
     on_data = None
+    on_rendered_data = None
     on_rendered_tag = None
 
     def __init__(self, parser, token):
@@ -239,7 +261,10 @@ class BaseTag(object):
             tmp = argument.full_render(self, tag_data, context=context)
             if tmp is utils.NULL or tmp is None:
                 continue
-            tag_data['{}__rendered'.format(argument.name)] = tmp
+            tag_data[argument.rendered_key] = tmp
+
+        # dispatch on_data signal
+        self.__dispatch_on_rendered_data(tag_data, context)
 
         return tag_data
 
@@ -324,6 +349,21 @@ class BaseTag(object):
             for method, error in result:
                 if error:
                     self.logger.error('on_rendered_tag: %s, returned error', method)
+                    self.logger.exception(error)
+
+    def __dispatch_on_rendered_data(self, data, context):
+        """
+        Dispatch on_data signal
+        :param data: tag data
+        :param context: context
+        :return:
+        """
+        result = self.on_rendered_data.send_robust(sender=self.__class__, data=data, context=context)
+
+        if self.logger.isEnabledFor(ERROR):
+            for method, error in result:
+                if error:
+                    self.logger.error('on_rendered_data: %s, returned error', method)
                     self.logger.exception(error)
 
     def __dispatch_on_rendered_tag(self, rendered_tag, data, context):
