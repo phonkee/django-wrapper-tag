@@ -389,6 +389,58 @@ class KeywordGroup(Argument):
         return doc
 
 
+class Positional(Argument):
+    """
+    Positional argument
+    """
+
+    varargs = False
+
+    # default doc_group
+    doc_group = docgen.ArgumentsGroupNaturalOrder(_('Positional arguments'),
+                                                  help_text=_('Positional arguments support for tags'),
+                                                  priority=9999)
+
+    def __init__(self, varargs=False, *args, **kwargs):
+        kwargs['default'] = kwargs.pop('default', [])
+        super(Positional, self).__init__(*args, **kwargs)
+
+        # is varargs?
+        self.varargs = bool(varargs)
+
+    def get_tag_value(self, args, kwargs):
+        """
+        Get keyword value from args/kwargs
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        result = self.default or []
+
+        if self.varargs:
+            while args:
+                result.append(args.pop(0))
+        else:
+            if not args and utils.is_template_debug():
+                raise TemplateSyntaxError('expected arg but no given')
+            result.append(args.pop(0))
+
+        return result
+
+    def gen_doc(self):
+        """
+        Generate documentation for argument
+        :return:
+        """
+
+        doc = super(Positional, self).gen_doc()
+
+        if self.varargs:
+            doc = '{}\n    * variable arguments count'.format(doc)
+
+        return doc
+
+
 class Event(Argument):
     """
     Event is shorthand for event arguments.

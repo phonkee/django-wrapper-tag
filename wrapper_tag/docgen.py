@@ -80,6 +80,18 @@ class ArgumentsGroup(object):
         return result
 
 
+class ArgumentsGroupNaturalOrder(ArgumentsGroup):
+
+    def render(self, arguments):
+        """
+        render renders documentation for arguments
+        :param arguments:
+        :return:
+        """
+        arguments = sorted(arguments, key=attrgetter('creation_counter'))
+        return super(ArgumentsGroupNaturalOrder, self).render(arguments)
+
+
 def generate(tag_cls):
     """
     generate generates documentation for given wrapper tag class

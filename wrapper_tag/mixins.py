@@ -42,7 +42,7 @@ class Identity(TagAttributes):
         Try to clean id, if not given generate one
         """
         if not value:
-            return 'id_{}'.format(random.randint(0, IDENTITY_ID_RAND_MAX))
+            return utils.generate_id()
         return value
 
     def render_id(self, argument, data, context):

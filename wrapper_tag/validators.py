@@ -143,5 +143,3 @@ class ModelInstance(object):
 
     def __str__(self):
         return 'value must be instance of: %s'.format(self.models)
-
-

@@ -2,6 +2,8 @@
 Various helper utilities for wrapper tag
 """
 from __future__ import absolute_import, print_function, unicode_literals
+
+import random
 import re
 
 from django import get_version
@@ -35,6 +37,9 @@ CAMEL_TO_SEPARATED = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
 
 # regex type for isinstance
 REGEX_TYPE = type(re.compile(''))
+
+# max rand value to generate id
+ID_RAND_MAX = 2 ** 32
 
 
 class NULL:
@@ -317,3 +322,11 @@ class StringSet(set):
             if not v:
                 continue
             super(StringSet, self).add(v)
+
+
+def generate_id(rand_max=ID_RAND_MAX, prefix="id_"):
+    """
+    Generate random identifier
+    :return:
+    """
+    return '{}{}'.format(prefix, random.randint(0, rand_max))
