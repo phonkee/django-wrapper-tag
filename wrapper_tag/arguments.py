@@ -471,9 +471,9 @@ class Event(Argument):
         """
         super(Event, self).contribute_to_class(tag_cls, name)
 
-        tag_cls.on_rendered_data.connect(self.on_rendered_data, dispatch_uid="events")
+        tag_cls.on_render_data.connect(self.on_render_data, dispatch_uid="events")
 
-    def on_rendered_data(self, sender, data, context, **kwargs):
+    def on_render_data(self, sender, data, context, **kwargs):
         """
         Add methods to rendered tag, to be accessible from template
         :param sender:
@@ -508,9 +508,9 @@ class Method(Argument):
         """
         super(Method, self).contribute_to_class(tag_cls, name)
 
-        tag_cls.on_rendered_tag.connect(self.on_rendered_tag, dispatch_uid="methods")
+        tag_cls.on_render_tag.connect(self.on_render_tag, dispatch_uid="methods")
 
-    def on_rendered_tag(self, sender, rendered_tag, data, context, **kwargs):
+    def on_render_tag(self, sender, rendered_tag, data, context, **kwargs):
         """
         Add methods to rendered tag, to be accessible from template
         :param sender:

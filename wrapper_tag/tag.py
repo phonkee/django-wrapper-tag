@@ -139,8 +139,9 @@ class TagMetaclass(type):
 
         # signals
         cls.on_data = Signal(providing_args=["data", "context"])
-        cls.on_rendered_tag = Signal(providing_args=["rendered_tag", "data", "context"])
-        cls.on_rendered_data = Signal(providing_args=["data", "context"])
+        cls.on_render_tag = Signal(providing_args=["rendered_tag", "data", "context"])
+        cls.on_render_data = Signal(providing_args=["data", "context"])
+        cls.on_register = Signal()
 
         super(TagMetaclass, cls).__init__(name, bases, attrs)
 
@@ -196,8 +197,8 @@ class BaseTag(object):
 
     # signals
     on_data = None
-    on_rendered_data = None
-    on_rendered_tag = None
+    on_render_data = None
+    on_render_tag = None
 
     def __init__(self, parser, token):
         """
@@ -264,7 +265,7 @@ class BaseTag(object):
             tag_data[argument.rendered_key] = tmp
 
         # dispatch on_data signal
-        self.__dispatch_on_rendered_data(tag_data, context)
+        self.__dispatch_on_render_data(tag_data, context)
 
         return tag_data
 
@@ -295,8 +296,8 @@ class BaseTag(object):
         if not isinstance(rendered_tag, rendered.RenderedTag):
             rendered_tag = rendered.RenderedTag(rendered_tag, self.options.start_tag, arguments=tag_kwargs)
 
-        # dispatch on_rendered_tag
-        self.__dispatch_on_rendered_tag(rendered_tag, tag_kwargs, context)
+        # dispatch on_render_tag
+        self.__dispatch_on_render_tag(rendered_tag, tag_kwargs, context)
 
         # stored to context under self.varname
         if self.varname:
@@ -348,40 +349,53 @@ class BaseTag(object):
         if self.logger.isEnabledFor(ERROR):
             for method, error in result:
                 if error:
-                    self.logger.error('on_rendered_tag: %s, returned error', method)
+                    self.logger.error('on_render_tag: %s, returned error', method)
                     self.logger.exception(error)
 
-    def __dispatch_on_rendered_data(self, data, context):
+    def __dispatch_on_render_data(self, data, context):
         """
         Dispatch on_data signal
         :param data: tag data
         :param context: context
         :return:
         """
-        result = self.on_rendered_data.send_robust(sender=self.__class__, data=data, context=context)
+        result = self.on_render_data.send_robust(sender=self.__class__, data=data, context=context)
 
         if self.logger.isEnabledFor(ERROR):
             for method, error in result:
                 if error:
-                    self.logger.error('on_rendered_data: %s, returned error', method)
+                    self.logger.error('on_render_data: %s, returned error', method)
                     self.logger.exception(error)
 
-    def __dispatch_on_rendered_tag(self, rendered_tag, data, context):
+    def __dispatch_on_render_tag(self, rendered_tag, data, context):
         """
-        Dispatch on_rendered_tag signal
+        Dispatch on_render_tag signal
         :param rendered_tag:
         :param data:
         :param context:
         :return:
         """
-        result = self.on_rendered_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag, data=data,
+        result = self.on_render_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag, data=data,
                                                   context=context)
 
         if self.logger.isEnabledFor(ERROR):
             for method, error in result:
                 if error:
-                    self.logger.error('on_rendered_tag: %s, returned error', method)
+                    self.logger.error('on_render_tag: %s, returned error', method)
                     self.logger.exception(error)
+
+    def get_template(self, template=None, template_name=None):
+        """
+        Shorthand to working with templates
+        :param template: string template
+        :param template_name: template filename
+        :return:
+        """
+        if template:
+            return Template(template)
+        elif template_name:
+            return get_template(template_name)
+        return None
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):

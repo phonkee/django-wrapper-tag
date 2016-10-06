@@ -21,7 +21,6 @@ from distutils.version import LooseVersion
 from django.utils import inspect
 from django.utils import six
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.functional import cached_property
 
 from logging import getLogger
 
@@ -132,7 +131,7 @@ class TemplateMixin(object):
         self._template = template
         self._template_name = template_name
 
-    @cached_property
+    @property
     def template(self):
         if self._template:
             return Template(self._template)
@@ -248,15 +247,24 @@ def register_tag(library, **kwargs):
     :return:
 
     @TODO: Add support for aliases.
+    @TODO: add support for signals
+    @TODO: add support for class prepared
     """
 
-    def get_library_name(cls):
-        """
-        Returns library name
-        :param cls:
-        :return:
-        """
-        return repr(cls).split('.')[-2]
+    signals = {
+        "on_data": kwargs.pop('on_data', None),
+        "on_render_data": kwargs.pop('on_render_data', None),
+        "on_render_tag": kwargs.pop('on_render_data', None),
+        "on_register": kwargs.pop('on_register', None),
+    }
+
+    # def get_library_name(cls):
+    #     """
+    #     Returns library name
+    #     :param cls:
+    #     :return:
+    #     """
+    #     return repr(cls).split('.')[-2]
 
     def wrap(cls):
 
@@ -270,6 +278,17 @@ def register_tag(library, **kwargs):
 
         # add main library tag
         library.tag(cls.options.start_tag, cls)
+
+        # bind signals
+        for signal, func in six.iteritems(signals):
+            if not callable(func):
+                continue
+            s = getattr(cls, signal)
+            s.connect(func, dispatch_uid=signal)
+
+        # send on_register signal
+        # @TODO: add this code also to aliases
+        cls.on_register.send_robust(sender=cls)
 
         logger.debug("Registered `%s`=>`%s` wrapper tag.", cls.options.start_tag, cls.options.end_tag)
 
