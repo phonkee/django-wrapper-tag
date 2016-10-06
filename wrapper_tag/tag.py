@@ -4,6 +4,8 @@ import copy
 from collections import OrderedDict
 
 from django.core.exceptions import ImproperlyConfigured
+from django.template import Context, Template
+from django.template.loader import get_template
 from django.dispatch import Signal
 from django.template.exceptions import TemplateSyntaxError
 from django.template import Node
@@ -384,7 +386,8 @@ class BaseTag(object):
                     self.logger.error('on_render_tag: %s, returned error', method)
                     self.logger.exception(error)
 
-    def get_template(self, template=None, template_name=None):
+    @classmethod
+    def get_template(cls, template=None, template_name=None):
         """
         Shorthand to working with templates
         :param template: string template
@@ -396,6 +399,14 @@ class BaseTag(object):
         elif template_name:
             return get_template(template_name)
         return None
+
+    @classmethod
+    def get_rendered_template(cls, template=None, template_name=None, data=None):
+        data = data or {}
+        t = cls.get_template(template=template, template_name=template_name)
+        if not t:
+            return
+        return t.render(Context(data))
 
 
 class Tag(six.with_metaclass(TagMetaclass, BaseTag, Node)):
