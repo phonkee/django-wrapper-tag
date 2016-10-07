@@ -288,6 +288,8 @@ def register_tag(library, **kwargs):
 
         # send on_register signal
         # @TODO: add this code also to aliases
+        # @TODO: log errors to debug
+        # @TODO: call all on_register on all __mro__ bases
         cls.on_register.send_robust(sender=cls)
 
         logger.debug("Registered `%s`=>`%s` wrapper tag.", cls.options.start_tag, cls.options.end_tag)

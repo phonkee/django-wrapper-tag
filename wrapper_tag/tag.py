@@ -225,15 +225,18 @@ class BaseTag(object):
         # die token die
         parser.delete_first_token()
 
-    def get_tag_data(self, context):
+    def get_tag_data(self, context, **data):
         """
         Return tag kwargs for render
-        :param context:
+        :param context: context
+        :param data: additional data
         :return:
         """
         kwargs = dict([(key, value.resolve(context)) for key, value in self.kwargs.items()])
         args = list([value.resolve(context) for value in self.args])
-        tag_data = {}
+
+        # do we really need to deepcopy this data?
+        tag_data = copy.deepcopy(data)
 
         # iterate over arguments and call get_tag_value on it
         for _, argument in six.iteritems(self.arguments):

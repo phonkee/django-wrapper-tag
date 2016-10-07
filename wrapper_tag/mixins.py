@@ -1,6 +1,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
-import random
+from collections import defaultdict
 
 import six
 from django.utils.html import format_html
@@ -13,13 +13,21 @@ from wrapper_tag import arguments, validators, utils
 IDENTITY_ID_RAND_MAX = 2 ** 32
 
 
+def tag_attributes_default(cls):
+    """
+    :param cls:
+    :return:
+    """
+    return defaultdict(utils.StringSet)
+
+
 class TagAttributes(object):
 
-    attrs = arguments.KeywordGroup(readonly=True)
+    attrs = arguments.KeywordGroup(readonly=True, default=tag_attributes_default)
 
     def render_attrs(self, argument, data, context):
-        attrs = data.get(argument.name, {})
-        full = ' '.join(['{}="{}"'.format(key, value) for key, value in six.iteritems(attrs)])
+        attrs = data.get(argument.name, self.arguments[argument.name].default)
+        full = ' '.join(['{}="{}"'.format(key, value) for key, value in six.iteritems(attrs) if value])
         full = ' ' + full if full else ''
         return mark_safe(full)
 
@@ -29,7 +37,7 @@ def id_data_callback(data, **kwargs):
     Add id to attrs
     """
     if 'attrs' in data:
-        data['attrs']['id'] = data['id']
+        data['attrs']['id'].add(data['id'])
 
 
 class Identity(TagAttributes):
@@ -64,8 +72,9 @@ def css_class_data_callback(data, **kwargs):
     """
     Check if TagAttributes
     """
-    if 'attrs' in data and 'css_class' in data:
-        data['attrs']['class'] = data['css_class']
+
+    if 'attrs' in data and 'attrs' in data:
+        data['attrs']['class'].add(data['css_class'])
 
 
 class CssClass(object):

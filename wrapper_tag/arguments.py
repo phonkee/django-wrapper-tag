@@ -333,8 +333,10 @@ class KeywordGroup(Argument):
         Return list of regexes of sources.
         :return:
         """
+        result = []
         for item in self.source:
-            yield re.compile('^{}$'.format(item.replace('+', '.+').replace('*', '.*')))
+            result.append(re.compile('^{}$'.format(item.replace('+', '.+').replace('*', '.*'))))
+        return result
 
     def is_source(self, source):
         """
@@ -354,7 +356,7 @@ class KeywordGroup(Argument):
         :param kwargs:
         :return:
         """
-        result = self.default or {}
+        result = self.default
 
         if self.readonly:
             return result
