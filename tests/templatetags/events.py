@@ -12,9 +12,9 @@ class MyEvent(wrapper_tag.Keyword):
         super(MyEvent, self).contribute_to_class(tag_cls, name)
 
         # bound to signal
-        tag_cls.on_rendered_tag.connect(self.on_rendered_tag, dispatch_uid="events")
+        tag_cls.on_render_tag.connect(self.on_render_tag, dispatch_uid="events")
 
-    def on_rendered_tag(self, sender, rendered_tag, data, context, **kwargs):
+    def on_render_tag(self, sender, rendered_tag, data, context, **kwargs):
         """
         Collect all events and expose them to rendered tag
         :param sender: tag class

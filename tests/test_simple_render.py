@@ -34,13 +34,15 @@ class TestSimpleRender(TestCase):
 
         for item in data:
             t = template.Template('{% load wrapper_tag_test_tags %}' + item['template'])
-            t.render(template.Context({}))
+            t.render({})
 
 
 class TestArgumentClean(TestCase):
 
     def test_argument_clean(self):
+
         class TestTag(tag.Tag):
             title = arguments.Keyword()
 
-        self.assertTrue('render_title' in dir(TestTag) and callable(TestTag.render_title))
+        self.assertTrue('render_title' in dir(TestTag))
+        self.assertTrue(callable(TestTag.render_title))

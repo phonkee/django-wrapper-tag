@@ -2,21 +2,19 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import copy
 from collections import OrderedDict
-
-from django.core.exceptions import ImproperlyConfigured
-from django.template import Context, Template
-from django.template.loader import get_template
-from django.dispatch import Signal
-from django.template.exceptions import TemplateSyntaxError
-from django.template import Node
-from django.utils import six
-
-from wrapper_tag import utils
-from wrapper_tag import arguments
-from wrapper_tag import rendered
-
 from logging import getLogger, ERROR, INFO
 
+from django.core.exceptions import ImproperlyConfigured
+from django.dispatch import Signal
+from django.template import Context, Template
+from django.template import Node
+from django.template.exceptions import TemplateSyntaxError
+from django.template.loader import get_template
+from django.utils import six
+
+from wrapper_tag import arguments
+from wrapper_tag import rendered
+from wrapper_tag import utils
 
 logger = getLogger('wrapper_tag.tags')
 
@@ -288,9 +286,15 @@ class BaseTag(object):
 
         self.logger.debug("Rendering with: %s", tag_kwargs)
 
-        # render content which is isolated from tag data
-        with context.push(parent=tag_kwargs):
-            tag_kwargs['content'] = self.nodelist.render(context)
+        context = context.flatten()
+        tag_kwargs['content'] = self.nodelist.render(context)
+        context['parent'] = tag_kwargs
+
+        # # render content which is isolated from tag data
+        # with context.push(parent=tag_kwargs):
+        #     tag_kwargs['content'] = self.nodelist.render(context)
+        #
+        # context = context.flatten()
 
         # render tag to variable
         rendered_tag = self.render_tag(tag_kwargs, context)
@@ -329,17 +333,20 @@ class BaseTag(object):
 
         return rendered_tag
 
-    def render_tag(self, tag_kwargs, context):
+    def render_tag(self, tag_kwargs, context: dict):
         """
         The method you should override in your custom tags
         """
         tmp = ''
-        with context.push(**tag_kwargs):
-            template = self.options.template
-            if template is None:
-                raise ImproperlyConfigured("tag: {}, error: please provide meta.template_name or meta.template".format(
-                                           self.options.start_tag))
-            tmp = template.render(context)
+        # with context.push(**tag_kwargs):
+        context.update(**tag_kwargs)
+
+        template = self.options.template
+        if template is None:
+            raise ImproperlyConfigured("tag: {}, error: please provide meta.template_name or meta.template".format(
+                self.options.start_tag))
+        tmp = template.render(context)
+
         return rendered.RenderedTag(tmp, self.options.start_tag, arguments=tag_kwargs)
 
     def __dispatch_on_data(self, data, context):
@@ -381,7 +388,7 @@ class BaseTag(object):
         :return:
         """
         result = self.on_render_tag.send_robust(sender=self.__class__, rendered_tag=rendered_tag, data=data,
-                                                  context=context)
+                                                context=context)
 
         if self.logger.isEnabledFor(ERROR):
             for method, error in result:

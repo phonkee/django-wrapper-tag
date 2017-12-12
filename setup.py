@@ -46,8 +46,9 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        'django>=1.8',
+        'django>=2.0',
         'six',
+        'unipath',
     ],
     license="MIT",
     zip_safe=False,
@@ -55,14 +56,13 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django',
-        'Framework :: Django :: 1.10',
+        'Framework :: Django :: 2.0',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )

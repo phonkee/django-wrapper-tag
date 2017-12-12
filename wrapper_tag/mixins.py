@@ -3,12 +3,14 @@ from __future__ import absolute_import, print_function, unicode_literals
 from collections import defaultdict
 
 import six
+from django import template
+from django.template import TemplateSyntaxError
+from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from wrapper_tag import arguments, validators, utils
-
 
 IDENTITY_ID_RAND_MAX = 2 ** 32
 
@@ -22,7 +24,6 @@ def tag_attributes_default(cls):
 
 
 class TagAttributes(object):
-
     attrs = arguments.KeywordGroup(readonly=True, default=tag_attributes_default)
 
     def render_attrs(self, argument, data, context):
@@ -41,7 +42,6 @@ def id_data_callback(data, **kwargs):
 
 
 class Identity(TagAttributes):
-
     id = arguments.Keyword(on_data=id_data_callback, help_text=_('html id attribute'))
     name = arguments.Keyword(help_text=_('html name attribute'))
 
@@ -94,43 +94,6 @@ Old mixins
 """
 
 
-class JsEvents(object):
-
-    js_events = arguments.KeywordGroup(readonly=True)
-
-    def render_js_events(self, argument, data, context):
-        """
-        Renders javascript event handlers.
-        :param argument:
-        :param data:
-        :param context:
-        :return:
-        """
-        if 'id' not in data or not data['id']:
-            return ''
-
-        js_events = data.get('js_events', {})
-        OBJ_NAME = '$obj'
-
-        lines = []
-
-        for js_event in js_events.keys():
-            if js_event not in argument.extra_data:
-                continue
-
-            lines.append(
-                argument.extra_data[js_event].format(object=OBJ_NAME, function=js_events[js_event])
-            )
-
-        if not lines:
-            return ''
-
-        lines.insert(0, 'var {obj_name} = $("#{id}");'.format(obj_name=OBJ_NAME, **data))
-        result = format_html('<script type="text/javascript">$(function() {{ {script} }});</script>',
-                             script=mark_safe("".join(lines)))
-        return result
-
-
 class Data(object):
     """
     Data handles kwarguments for `data-` html attributes.
@@ -158,7 +121,8 @@ class Tag(object):
     TAG_CHOICES = ['div']
     TAG_DEFAULT = 'div'
 
-    tag = arguments.Keyword(help_text='tag of html element', choices=lambda x: Tag.TAG_CHOICES, default=lambda x: Tag.TAG_DEFAULT,
+    tag = arguments.Keyword(help_text='tag of html element', choices=lambda x: Tag.TAG_CHOICES,
+                            default=lambda x: Tag.TAG_DEFAULT,
                             tag_render_method="render_html_tag")
 
 
@@ -170,7 +134,6 @@ class Hyperlink(object):
 
 
 class Size(object):
-
     size = arguments.KeywordGroup(('xs', 'sm', 'md', 'lg'))
 
     def render_size(self, argument, data, context):
@@ -232,7 +195,6 @@ class Common(Identity, CssClass, Data, Tag):
 
 
 class ColorMixin(object):
-
     AVAILABLE_COLORS = (
         'green', 'greenDark', 'greenLight',
         'purple', 'magenta',
@@ -263,7 +225,6 @@ class ColorMixin(object):
 
 
 class BackgroundColorMixin(ColorMixin):
-
     bg_color = arguments.Keyword(choices=ColorMixin.AVAILABLE_COLORS)
 
     def render_bg_color(self, argument, data, context):
@@ -286,12 +247,19 @@ class TextColorMixin(ColorMixin):
         return self.get_color_class(data.get(argument.name, None), 'txt')
 
 
-class ModalJsEvents(JsEvents):
-    js_events = arguments.KeywordGroup(('on_show', 'on_after_show', 'on_hide', 'on_after_hide', 'on_data_load'),
-                                       extra_data={
-                                           'on_show': '{object}.on("show.bs.modal", {function});',
-                                           'on_after_show': '{object}.on("shown.bs.modal", {function});',
-                                           'on_hide': '{object}.on("hide.bs.modal", {function});',
-                                           'on_after_hide': '{object}.on("hidden.bs.modal", {function});',
-                                           'on_data_load': '{object}.on("loaded.bs.modal", {function});',
-                                       })
+class ExtraContent(object):
+    """
+    ExtraContent mixin provides extra_content to template.
+    """
+
+    @property
+    def extra_content_template(self):
+        raise TemplateSyntaxError('ExtraContent mixin needs extra_content_template property.')
+
+    def render_tag(self, tag_kwargs, context):
+        context['extra_content'] = render_to_string(self.extra_content_template, context)
+        print(context['extra_content'])
+        rendered = super(ExtraContent, self).render_tag(tag_kwargs, context)
+        print("rendered", rendered)
+
+        return rendered

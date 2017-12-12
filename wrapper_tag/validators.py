@@ -2,6 +2,7 @@ from __future__ import unicode_literals, print_function
 from django.core.validators import *
 from django.db import models
 from django.utils.encoding import smart_text, python_2_unicode_compatible
+import six
 
 
 def any(*validators):

@@ -1,25 +1,18 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 test_django-wrapper-tag
 ------------
-
 Tests for `django-wrapper-tag` inheritance of tags module.
 """
 
 from django.test import TestCase
 
-from wrapper_tag import tag
 from wrapper_tag import arguments
-
-import django.template.base
+from wrapper_tag import tag
 
 
 class TestInheritanceTag(TestCase):
 
     def test_something(self):
-
         class FirstTag(object):
             title11 = arguments.Keyword()
             title12 = arguments.Keyword()

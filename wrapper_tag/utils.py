@@ -18,13 +18,14 @@ from django.template.loader import get_template
 
 from distutils.version import LooseVersion
 
-from django.utils import inspect
+import inspect
+# from django.utils import inspect
 from django.utils import six
 from django.utils.encoding import python_2_unicode_compatible
 
 from logging import getLogger
 
-logger = getLogger("wrapper_tag")
+logger = getLogger('wrapper_tag')
 
 
 DJANGO_1_9_OR_HIGHER = (
@@ -189,7 +190,7 @@ def verify_func_signature(func, *args, **kwargs):
     :return:
     """
     spec = inspect.getargspec(func)
-    need_star_kwargs = kwargs.pop('need_star_kwargs', False)
+    need_star_kwargs = kwargs.pop("need_star_kwargs", False)
     exact_names = kwargs.pop('exact_names', False)
     prefix = kwargs.pop('prefix', '')
     enable_if = kwargs.pop('enable_if', True)
