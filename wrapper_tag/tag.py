@@ -286,9 +286,9 @@ class BaseTag(object):
 
         self.logger.debug("Rendering with: %s", tag_kwargs)
 
-        context = context.flatten()
+        context_dict = context.flatten()
         tag_kwargs['content'] = self.nodelist.render(context)
-        context['parent'] = tag_kwargs
+        context_dict['parent'] = tag_kwargs
 
         # # render content which is isolated from tag data
         # with context.push(parent=tag_kwargs):
@@ -297,7 +297,7 @@ class BaseTag(object):
         # context = context.flatten()
 
         # render tag to variable
-        rendered_tag = self.render_tag(tag_kwargs, context)
+        rendered_tag = self.render_tag(tag_kwargs, context_dict)
 
         self.logger.debug("Rendered: %s", rendered_tag)
 
@@ -321,8 +321,8 @@ class BaseTag(object):
                 #     raise TemplateSyntaxError('variable {} already exists on context'.format(self.varname))
 
             # store value to context and push one context
-            context[self.varname] = rendered_tag
-            context.push({})
+            context_dict[self.varname] = rendered_tag
+            # context.push({})
 
             return ''
 
