@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ easy_install django-wrapper-tag
+    $ easy_install wrapper_tag
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv django-wrapper-tag
-    $ pip install django-wrapper-tag
+    $ mkvirtualenv wrapper_tag
+    $ pip install wrapper_tag

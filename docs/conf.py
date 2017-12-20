@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'wrapper_tag'
-copyright = u'2016, Peter Vrba'
+copyright = u'2017, Peter Vrba'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -173,7 +173,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'django-wrapper-tagdoc'
+htmlhelp_basename = 'wrapper_tagdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -192,7 +192,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'django-wrapper-tag.tex', u'wrapper_tag Documentation',
+  ('index', 'wrapper_tag.tex', u'wrapper_tag Documentation',
    u'Peter Vrba', 'manual'),
 ]
 
@@ -222,7 +222,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'django-wrapper-tag', u'wrapper_tag Documentation',
+    ('index', 'wrapper_tag', u'wrapper_tag Documentation',
      [u'Peter Vrba'], 1)
 ]
 
@@ -236,8 +236,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'django-wrapper-tag', u'wrapper_tag Documentation',
-   u'Peter Vrba', 'django-wrapper-tag', 'One line description of project.',
+  ('index', 'wrapper_tag', u'wrapper_tag Documentation',
+   u'Peter Vrba', 'wrapper_tag', 'One line description of project.',
    'Miscellaneous'),
 ]
 

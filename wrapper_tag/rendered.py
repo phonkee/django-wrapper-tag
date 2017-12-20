@@ -1,14 +1,11 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
-
-SCRIPT_TAG = 'script'
+"""
+@author 'Peter Vrba <phonkee@phonkee.eu>'
+"""
 
 
-@python_2_unicode_compatible
 class RenderedTag(dict):
     """
-    Rendered tag curried string object with data, so we can interact with the data on upper levels
+    RenderedTag represents rendered tag along with ability to store data.
     """
     content = None
     tag = None
@@ -16,7 +13,7 @@ class RenderedTag(dict):
     def __init__(self, rendered_content, tag_name, **data):
         self.content = rendered_content
         self.tag = tag_name
-        super(RenderedTag, self).__init__(**data)
+        super().__init__(**data)
 
     def __str__(self):
         """

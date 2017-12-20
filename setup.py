@@ -9,9 +9,20 @@ try:
 except ImportError:
     from distutils.core import setup
 
-__version__ = re.search(
-    "__version__[\s]*=[\s]*(.*)[\s]*",
-    open('wrapper_tag/__init__.py').read()).group(1).strip('"\'')
+
+def get_version(*file_paths):
+    """Retrieves the version from wrapper_tag/__init__.py"""
+    filename = os.path.join(os.path.dirname(__file__), *file_paths)
+    version_file = open(filename).read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError('Unable to find version string.')
+
+
+version = get_version("wrapper_tag", "__init__.py")
+
 
 if sys.argv[-1] == 'publish':
     try:
@@ -26,7 +37,7 @@ if sys.argv[-1] == 'publish':
 
 if sys.argv[-1] == 'tag':
     print("Tagging the version on git:")
-    os.system("git tag -a %s -m 'version %s'" % (__version__, __version__))
+    os.system("git tag -a %s -m 'version %s'" % (version, version))
     os.system("git push --tags")
     sys.exit()
 
@@ -34,35 +45,35 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
-    name='django-wrapper-tag',
-    version=__version__,
-    description="""Wrapping template tag for django""",
+    name='wrapper_tag',
+    version=version,
+    description="""Your project description goes here""",
     long_description=readme + '\n\n' + history,
     author='Peter Vrba',
     author_email='phonkee@phonkee.eu',
-    url='https://github.com/phonkee/django-wrapper-tag',
+    url='https://github.com/phonkee/wrapper_tag',
     packages=[
-        'wrapper_tag'
+        'wrapper_tag',
     ],
     include_package_data=True,
     install_requires=[
         'django>=2.0',
-        'six',
-        'unipath',
+        'stringcase',
     ],
     license="MIT",
     zip_safe=False,
-    keywords='django-wrapper-tag',
+    keywords='wrapper_tag',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django',
-        'Framework :: Django :: 2.0',
+        'Framework :: Django :: 1.10',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
     ],
 )

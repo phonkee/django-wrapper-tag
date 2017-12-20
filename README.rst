@@ -2,77 +2,56 @@
 wrapper_tag
 =============================
 
-.. image:: https://badge.fury.io/py/django-wrapper-tag.png
-    :target: https://badge.fury.io/py/django-wrapper-tag
+.. image:: https://badge.fury.io/py/wrapper_tag.svg
+    :target: https://badge.fury.io/py/wrapper_tag
 
-Wrapping template tag for django
+.. image:: https://travis-ci.org/phonkee/wrapper_tag.svg?branch=master
+    :target: https://travis-ci.org/phonkee/wrapper_tag
+
+.. image:: https://codecov.io/gh/phonkee/wrapper_tag/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/phonkee/wrapper_tag
+
+Your project description goes here
 
 Documentation
 -------------
 
-Wrapper tag provides base class for wrapping tag. Wrapping tag which can have defined keyword arguments, keyword
-arguments group in declarative way, and provide multiple steps of template rendering.
-
-Example::
-
-    from django import template
-    register = template.Library()
-
-    @wrapper_tag.register_tag(register)
-    class ExampleTag(wrapper_tag.Tag):
-
-        title = wrapper_tag.Keyword(help_text=('title for example tag'))
-
-        class Meta:
-            template = "<div{{ title__rendered }}>{{ content }}</div>"
-
-        def render_title(self, argument, data, context):
-            if argument.name not in data:
-                return
-            return ' title="{title}"'.format(data[argument.name])
-
-And then simply use tag in template::
-
-    {% example title="Some informational title" %}
-        Content
-    {% end:example %}
-
-This will yield to::
-
-    <div title="Some informational title">
-        Content
-    </div>
-
-That was just a simple eample what wrapper tag can do. It can do much more than that.
+The full documentation is at https://wrapper_tag.readthedocs.io.
 
 Quickstart
 ----------
 
 Install wrapper_tag::
 
-    pip install django-wrapper-tag
+    pip install wrapper_tag
 
-Then use it in a project::
+Add it to your `INSTALLED_APPS`:
+
+.. code-block:: python
 
     INSTALLED_APPS = (
-        'wrapper_tag',
+        ...
+        'wrapper_tag.apps.WrapperTagConfig',
+        ...
     )
+
+Add wrapper_tag's URL patterns:
+
+.. code-block:: python
+
+    from wrapper_tag import urls as wrapper_tag_urls
+
+
+    urlpatterns = [
+        ...
+        url(r'^', include(wrapper_tag_urls)),
+        ...
+    ]
 
 Features
 --------
 
-Wrapper tag provides multiple features for tag and arguments.
-
-* Automatically generates documantation about arguments to tag documentation
-* Define tag aliases and automatically register them as tags.
-* Provide custom render method for tag (`render_tag`)
-* when `TEMPLATE_DEBUG` is enabled wrapper tag runs validations for callbacks
-
-Tag arguments features:
-
-* default values for arguments
-* choices for arguments
-* validators for arguments
+* TODO
 
 Running Tests
 -------------
@@ -82,11 +61,11 @@ Does the code actually work?
 ::
 
     source <YOURVIRTUALENV>/bin/activate
-    (myenv) $ pip install -r requirements_test.txt
-    (myenv) $ python runtests.py
+    (myenv) $ pip install tox
+    (myenv) $ tox
 
 Credits
----------
+-------
 
 Tools used in rendering this package:
 

@@ -1,567 +1,306 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
-import re
 
-import six
 from django.core.exceptions import ValidationError
-from django.template import TemplateSyntaxError, Context
-from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.template import Context, TemplateSyntaxError
 
+from wrapper_tag import globstr
 from wrapper_tag import utils
-from wrapper_tag import docgen
-from wrapper_tag import validators
-from wrapper_tag.rendered import RenderedTag, SCRIPT_TAG
-
-# regex type for isinstance
-REGEX_TYPE = type(re.compile(''))
 
 
-RENDER_METHOD_TAG = 1
-RENDER_METHOD_ARGUMENT = 2
-
-
-class Argument(utils.TemplateMixin):
-
-    # Tracks each time a Field instance is created. Used to retain order.
-    creation_counter = 0
-
-    # name is provided by tag metaclass
+class Argument:
+    # argument name in tag definition
     name = None
 
-    # logger instance
-    logger = None
+    # choices
+    choices = None
 
-    _choices = None
-    _default = None
+    # default value
+    default = None
 
+    # help text for argument (used in documentation)
     help_text = None
-    readonly = False
-    _tag_render_method = None
-    validators = None
-    extra_data = None
 
-    render_method_type = None
+    # store name of method
+    _render_method_name = None
 
-    # signals
-    on_data = None
+    # list of validators
+    _validators = None
 
-    # default doc_group
-    doc_group = docgen.ArgumentsGroup(_('Arguments'), help_text=_('Group of generic arguments'))
-
-    def __init__(self, help_text=None, on_data=None, readonly=False, default=None,
-                 validators=None, extra_data=None, choices=None, tag_render_method=None, **kwargs):
-        # Increase the creation counter, and save our local copy.
-        self.creation_counter = Argument.creation_counter
-        Argument.creation_counter += 1
-
-        self.on_data = on_data
-        self.extra_data = extra_data or {}
+    def __init__(self, name=None, default=None, choices=None, help_text=None, render_method=None, validators=None):
+        """
+        construct base argument
+        :param default:
+        :param name:
+        :param help_text:
+        """
+        self.choices = choices or []
+        self.default = default
+        self.name = name
         self.help_text = help_text
-        self.readonly = readonly
-        self._tag_render_method = tag_render_method
-        self._default = default
+        self._render_method_name = render_method
+        self._validators = validators or []
+        if not utils.is_seq(self._validators):
+            self._validators = list(self._validators)
 
-        if validators and not utils.is_seq(validators):
-            validators = [validators]
-
-        self.validators = validators or []
-        self._choices = choices
-
-        super(Argument, self).__init__(**kwargs)
-
-    def __repr__(self):
+    def claim_arguments(self, args: list, kwargs: dict):
         """
-        Representation of argument
+        argument should get args/kwargs that he needs
+        :param args:
+        :param kwargs:
+        """
+
+    @property
+    def clean_method_name(self) -> str:
+        """
+        clean_method_name returns method name on tag instane
         :return:
         """
-        return '<argument:{}:{} at 0x{:x}>'.format(self.name, self.__class__.__name__, id(self))
+        return "clean_{}".format(self.name)
 
-    @property
-    def tag_clean_method(self):
-        return 'clean_{}'.format(self.name)
-
-    @property
-    def tag_render_method(self):
-        if self._tag_render_method:
-            return self._tag_render_method
-        return 'render_{}'.format(self.name)
-
-    @property
-    def template_errors(self):
-        return {
-            'no_template': 'Argument `{}` doesn\'t provide template or template_name'.format(self.name),
-        }
-
-    @property
-    def default(self):
+    def contribute_to_class(self, cls, name):
         """
-        Default must be copied.
-        :return:
-        """
-        if callable(self._default):
-            return copy.deepcopy(self._default(self))
-        return copy.deepcopy(self._default)
-
-    @default.setter
-    def default(self, value):
-        self._default = value
-
-    @property
-    def choices(self):
-        if callable(self._choices):
-            return self._choices(self)
-        return self._choices
-
-    @choices.setter
-    def choices(self, value):
-        self._choices = value
-
-    @property
-    def rendered_key(self):
-        return '{}__rendered'.format(self.name)
-
-    def contribute_to_class(self, tag_cls, name):
-        """
-        Contribute to class
-        :param tag_cls:
+        Arguments can contribute when tag class is created.
+        :param cls:
         :param name:
         :return:
         """
 
-        def _clean_argument_(tag, argument, value):
-            """
-            Dummy clean_<argument> method
-            """
-            return value
+        render_method = getattr(cls, self.render_method_name, None)
 
-        # check if clean_<argument> method is defined on tag, if not create dummy one
-        tcl = getattr(tag_cls, self.tag_clean_method, None)
-        if tcl is None:
-            setattr(tag_cls, self.tag_clean_method, _clean_argument_)
+        if render_method is None:
+            def blank(self, context, data, **kwargs):
+                raise NotImplementedError
 
-        # check if render_<argument> method is defined on tag, if not assign `render`
-        # @TODO: check arguments of render method
-        trm = getattr(tag_cls, self.tag_render_method, None)
-        if trm is None:
-            self.render_method_type = RENDER_METHOD_ARGUMENT
+            # set method to blank one
+            setattr(cls, self.render_method_name, blank)
         else:
-            self.render = trm
-            self.render_method_type = RENDER_METHOD_TAG
-            # verify data_callback signature
             if utils.is_template_debug():
-                utils.verify_func_signature(trm, 'argument', 'data', 'context', exact_names=True,
-                                            prefix="{}.{}, ".format(tag_cls.__name__, self.name))
+                utils.verify_func_signature(render_method, "context", "data", "**kwargs")
 
-        # on_data signal receiver
-        if self.on_data:
-            if callable(self.on_data):
-                tag_cls.on_data.connect(self.on_data)
-            else:
-                on_data = getattr(tag_cls, self.on_data, None)
-                if on_data and callable(on_data):
-                    tag_cls.on_data.connect(on_data)
+        clean_method = getattr(cls, self.clean_method_name, None)
+        if clean_method is None:
+            def clean_default(self, value, **kwargs):
+                raise NotImplementedError
 
-    def full_clean(self, tag, value):
+            setattr(cls, self.clean_method_name, clean_default)
+        else:
+            if utils.is_template_debug():
+                utils.verify_func_signature(clean_method, "value", "**kwargs")
+
+    def full_clean(self, tag_instance, value):
         """
-        Internal!
+        full_clean performs full clean on value, following steps are run
 
-        Do not override this method, rather provide `clean` method
-        """
-        for validator in self.validators:
-            try:
-                validator(value)
-            except ValidationError:
-                value = self.default
-                break
+        * check if value in choices
+        * run all validators
+        * call clean_<attribute> method on tag
 
-        value = getattr(tag, self.tag_clean_method)(self, value)
-        value = self.clean(tag, value)
-        return value
-
-    def get_tag_value(self, args, kwargs):
-        """
-        Get keyword value from args/kwargs
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        if self.readonly:
-            return self.default
-        result = kwargs.pop(self.name, self.default)
-
-        # if __raw__<name> was provided we use it as raw value (probably inherited from parent)
-        # be careful though and use this just in situations you want to pass all values from parent
-        if self.raw_key in kwargs:
-            result = kwargs.pop(self.raw_key)
-
-        return result
-
-    def clean(self, tag, value):
-        """
-        This method should be overridden
+        :param tag_instance:
         :param value:
         :return:
         """
+
+        # first check against choices
+        if self.choices:
+            if value not in self.choices:
+                value = self.get_default()
+
+        # run validators
+        if self._validators:
+            for validator in self._validators:
+                try:
+                    validator(value)
+                except ValidationError:
+                    value = self.get_default()
+                    break
+                except Exception:
+                    # unknown exception
+                    value = self.get_default()
+                    break
+
+        # now run custom clean method
+        try:
+            value = getattr(tag_instance, self.clean_method_name)(value)
+        except ValidationError:
+            value = self.get_default()
+        except NotImplementedError:
+            pass
+        except Exception:
+            pass
+
         return value
 
-    def full_render(self, tag, data, context):
+    def get_default(self):
         """
-        Internal!
+        get_default returns default value
+        :return:
+        """
+        if callable(self.default):
+            return self.default()
 
+        return copy.deepcopy(self.default)
+
+    def get_value(self, _: Context, value):
+        """
+        returns value from given context
+        :param _: context
+        :param value: value that contains or is FiterExpression
+        """
+        return self.default
+
+    def render(self, context: Context, data: dict, tag):
+        """
+        render renders attribute
+        :param context:
         :param data:
+        :param tag:
         :return:
         """
+        result = getattr(tag, self.render_method_name)(context, data)
 
-        with context.push(extra_data=self.extra_data, argument=self):
-            if self.render_method_type == RENDER_METHOD_TAG:
-                return self.render(tag, self, data, context)
-            elif self.render_method_type == RENDER_METHOD_ARGUMENT:
-                return self.render(tag, data, context)
-
-    def render(self, tag, data, context):
-        """
-        Rendering function
-        :param data:
-        :return:
-        """
-        template = self.template
-
-        if not template:
-            return utils.NULL
-
-        with context.push(**data):
-            return template.render(context)
-            # return template.render(Context(data))
-
-    def gen_doc(self):
-        """
-        Generate documentation for argument
-        :return:
-        """
-
-        doc = '``{}``'.format(self.name)
-
-        if self.help_text:
-            doc = '{} - {}'.format(doc, self.help_text)
-
-        return doc
+        return result
 
     @property
-    def raw_key(self):
-        return '__raw__{}'.format(self.name)
+    def render_method_name(self):
+        """
+        render_method_name returns method name that renders argument on tag instance
+        :return:
+        """
+        if self._render_method_name:
+            return self._render_method_name
+        return "render_{}".format(self.name)
+
+
+class Positional(Argument):
+    # is_varargs consumes all positional values (star) including no values
+    is_varargs = False
+
+    def __init__(self, is_varargs=False, **kwargs):
+        """
+        positional argument
+
+        when is_varargs is set, it consumes star args
+        :param is_varargs:
+        """
+
+        # if no default provided, return blank list
+        kwargs['default'] = kwargs.pop('default', [])
+
+        super().__init__(**kwargs)
+
+        # set if we have varargs
+        self.is_varargs = is_varargs
+
+    def claim_arguments(self, args: list, kwargs: dict):
+        """
+        claim_arguments pops values from args and returns value.
+        :param args:
+        :param kwargs:
+        """
+
+        if self.is_varargs:
+            value = []
+            while True:
+                try:
+                    value.append(args.pop(0))
+                except IndexError:
+                    return value
+
+        try:
+            value = args.pop(0)
+        except IndexError as _:
+            raise TemplateSyntaxError("expected positional argument")
+
+        return value
+
+    def get_value(self, context: Context, value):
+        """
+        returns value from given context
+        :param context: context
+        :param value: value that contains or is FiterExpression
+        """
+
+        # in case there is no value, we should return default
+        if not value:
+            return self.get_default()
+
+        if self.is_varargs:
+            resolved = []
+            for item in value:
+                try:
+                    resolved.append(item.resolve(context, ignore_failures=True))
+                except Exception:
+                    resolved.append(item)
+        else:
+            try:
+                resolved = value.resolve(context, ignore_failures=True)
+            except Exception:
+                resolved = value
+
+        return resolved
 
 
 class Keyword(Argument):
-    """
-    Single keyword argument such as {% tag title="title" %}
-    """
 
-    # default doc_group
-    doc_group = docgen.ArgumentsGroup(_('Keyword arguments'), priority=1000)
-
-    def get_tag_value(self, args, kwargs):
+    def claim_arguments(self, args: list, kwargs: dict):
         """
-        Get keyword value from args/kwargs
+        argument should get args/kwargs that he needs
         :param args:
         :param kwargs:
-        :return:
         """
-        value = super(Keyword, self).get_tag_value(args, kwargs)
-        if self.choices and value not in self.choices:
-            value = self.default
-        return value
+        return kwargs.pop(self.name, self.get_default())
 
-    def gen_doc(self):
-        doc = super(Keyword, self).gen_doc()
-        if self.choices:
-            doc = '{}\n    * choices - {}'.format(doc, self.choices)
-        if self.default:
-            doc = '{}\n    * default - {}'.format(doc, self.default)
-        return doc
+    def get_value(self, context: Context, value):
+        """
+        returns value from given context
+        :param context: context
+        :param value: value that contains or is FiterExpression
+        """
+        if not value:
+            return self.get_default()
+
+        try:
+            resolved = value.resolve(context, ignore_failures=True)
+        except:
+            resolved = value
+
+        return resolved
 
 
 class KeywordGroup(Argument):
     """
-    Group of multiple keyword arguments.
+    KeywordGroup of keywords identified by patterns
     """
 
-    source = None
-    choices = None
+    # patterns to match group of keyword arguments
+    patterns = None
 
-    # default doc_group
-    doc_group = docgen.ArgumentsGroup(_('Keyword arguments groups'),
-                                      help_text=_('Group of keywords identified by "source". Source is a list of '
-                                                  'regular expressions that keywords names match.'))
+    def __init__(self, patterns, **kwargs):
 
-    def __init__(self, source=None, choices=None, **kwargs):
-        kwargs['default'] = kwargs.pop('default', {})
-        kwargs['choices'] = kwargs.pop('choices', {})
-        super(KeywordGroup, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
-        # clean source
-        self._set_source(source)
+        self.patterns = []
 
-        self.choices = choices
-
-        # check if sources are set
-        if not self.readonly and not self.source and utils.get_config().template_debug:
-            raise TemplateSyntaxError('keyword group must have source set.')
-
-    def _set_source(self, source):
-        """
-        Clean source and convert to regular expression
-
-        @TODO: probably source must be just simple list of strings (no flags) so user can add custom source.
-
-        :return:
-        """
-        self.source = []
-        if source is None:
-            return
-
-        if not utils.is_seq(source):
-            source = [source]
-
-        for item in source:
-            self.source.append(item)
-
-    @property
-    def compiled_source(self):
-        """
-        Return list of regexes of sources.
-        :return:
-        """
-        result = []
-        for item in self.source:
-            result.append(re.compile('^{}$'.format(item.replace('+', '.+').replace('*', '.*'))))
-        return result
-
-    def is_source(self, source):
-        """
-        Check if given source is one of sources
-        :param source:
-        :return:
-        """
-        for cs in self.compiled_source:
-            if cs.match(source):
-                return True
-        return False
-
-    def get_tag_value(self, args, kwargs):
-        """
-        Get keyword value from args/kwargs
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        result = self.default
-
-        if self.readonly:
-            return result
-
-        for key in kwargs.keys():
-            for source in self.compiled_source:
-                if source.match(key):
-                    result[key] = kwargs.pop(key)
-
-        return result
-
-    def filter_data(self, data):
-        """
-        Filter data for sources
-        :param data:
-        :return:
-        """
-        result = {}
-        cs = self.compiled_source
-        for key in data.keys():
-            for source in cs:
-                if source.match(key):
-                    result[key] = data[key]
-        return result
-
-    def gen_doc(self):
-        doc = super(KeywordGroup, self).gen_doc()
-        if self.source:
-            doc = '{}\n    * source - {}'.format(doc, ", ".join(self.source))
-        if self.choices:
-            doc = '{}\n    * choices - {}'.format(doc, self.choices)
-        if self.default:
-            doc = '{}\n    * default:: ``{}``'.format(doc, self.default)
-        return doc
-
-
-class Positional(Argument):
-    """
-    Positional argument
-    """
-
-    varargs = False
-
-    # default doc_group
-    doc_group = docgen.ArgumentsGroupNaturalOrder(_('Positional arguments'),
-                                                  help_text=_('Positional arguments support for tags'),
-                                                  priority=9999)
-
-    def __init__(self, varargs=False, *args, **kwargs):
-        kwargs['default'] = kwargs.pop('default', [])
-        super(Positional, self).__init__(*args, **kwargs)
-
-        # is varargs?
-        self.varargs = bool(varargs)
-
-    def get_tag_value(self, args, kwargs):
-        """
-        Get keyword value from args/kwargs
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        result = self.default or []
-
-        if self.varargs:
-            while args:
-                result.append(args.pop(0))
+        if utils.is_seq(patterns):
+            self.patterns += list(patterns)
+        elif isinstance(patterns, str):
+            self.patterns.append(patterns)
         else:
-            if not args and utils.is_template_debug():
-                raise TemplateSyntaxError('expected arg but no given')
-            result.append(args.pop(0))
+            raise TemplateSyntaxError("invalid patterns, expected str/list/tuple, got: {}".format(type(patterns)))
 
-        return result
-
-    def gen_doc(self):
+    def claim_arguments(self, args: list, kwargs: dict):
         """
-        Generate documentation for argument
-        :return:
-        """
-
-        doc = super(Positional, self).gen_doc()
-
-        if self.varargs:
-            doc = '{}\n    * variable arguments count'.format(doc)
-
-        return doc
-
-
-class Event(Argument):
-    """
-    Event is shorthand for event arguments.
-
-    Event has additional functionality to add `events` on RenderedTag.
-    """
-
-    # default doc_group
-    doc_group = docgen.ArgumentsGroup(_('Events'), help_text=_('Event handlers that are available on rendered '
-                                                               'tag `events` dictionary'), priority=0)
-
-    def __init__(self, *args, **kwargs):
-        kwargs['validators'] = kwargs.pop('validators', [])
-        kwargs['validators'].append(validators.any(
-            validators.requires_tag(SCRIPT_TAG),
-            validators.string(),
-        ))
-        super(Event, self).__init__(*args, **kwargs)
-
-    def contribute_to_class(self, tag_cls, name):
-        """
-        Patch render_wrapper_tag method on tag, to set 'events' on RenderedTag
-        :param tag_cls: tag class
-        :param name:
-        :return:
-        """
-        super(Event, self).contribute_to_class(tag_cls, name)
-
-        tag_cls.on_render_data.connect(self.on_render_data, dispatch_uid="events")
-
-    def on_render_data(self, sender, data, context, **kwargs):
-        """
-        Add methods to rendered tag, to be accessible from template
-        :param sender:
-        :param data:
-        :param context:
+        argument should get args/kwargs that he needs
+        :param args:
         :param kwargs:
-        :return:
         """
-        if 'events__' not in data:
-            data['events__'] = {}
+        values = {}
 
-        for _, argument in six.iteritems(sender.arguments):
-            if not isinstance(argument, Event):
-                continue
+        globs = [globstr.get(glob) for glob in self.patterns]
 
-            if argument.name in data and argument.rendered_key in data:
-                data['events__'][argument.name] = data[argument.rendered_key]
+        for key in list(kwargs.keys()):
+            for g in globs:
+                if g.match(key):
+                    values[key] = kwargs.pop(key)
 
-
-class Method(Argument):
-
-    # default doc_group
-    doc_group = docgen.ArgumentsGroup(_('Methods'), help_text=_('Methods that are available on rendered '
-                                                                'tag `methods` dictionary'), priority=0)
-
-    def contribute_to_class(self, tag_cls, name):
-        """
-        Patch render_wrapper_tag method on tag, to set 'events' on RenderedTag
-        :param tag_cls: tag class
-        :param name:
-        :return:
-        """
-        super(Method, self).contribute_to_class(tag_cls, name)
-
-        tag_cls.on_render_tag.connect(self.on_render_tag, dispatch_uid="methods")
-
-    def on_render_tag(self, sender, rendered_tag, data, context, **kwargs):
-        """
-        Add methods to rendered tag, to be accessible from template
-        :param sender:
-        :param rendered_tag:
-        :param data:
-        :param context:
-        :param kwargs:
-        :return:
-        """
-        if rendered_tag.get('methods', None) is None:
-            rendered_tag['methods'] = {}
-
-        for _, argument in six.iteritems(sender.arguments):
-            if not isinstance(argument, Method):
-                continue
-
-            if argument.rendered_key in data:
-                rendered_tag['methods'][argument.name] = RenderedTag(data[argument.rendered_key], SCRIPT_TAG)
-
-
-class Hyperlink(KeywordGroup):
-    """
-    Hyperlink argument groups functionality for plain href and also for url reversing abilities
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs['source'] = ('href', 'url', 'url_kwarg_*', 'url_arg_*', 'url_query')
-        kwargs['default'] = {
-            'href': '#'
-        }
-        super(Hyperlink, self).__init__(*args, **kwargs)
-
-    def render(self, argument, data, context):
-        """
-        Return rendered hyperlink
-        :param data: tag data
-        :param context: render context
-        :return:
-        """
-        value = data[self.name]
-
-        if 'url' in value:
-            kwarg_keys = utils.find_elements('url_kwarg_*', value.keys())
-            arg_keys = utils.find_elements('url_arg_*', sorted(value.keys()))
-            url_kwargs = {k.lstrip('url_kwarg_'): v for k, v in six.iteritems(value) if k in kwarg_keys}
-            url_args = [value[v] for v in arg_keys]
-
-            rev = reverse(value['url'], args=url_args, kwargs=url_kwargs)
-            if 'url_query' in value and value['url_query']:
-                rev = '{}?{}'.format(rev, value['url_query'])
-            return rev
-        return value['href']
+        return values

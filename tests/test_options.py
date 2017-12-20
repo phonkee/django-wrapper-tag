@@ -1,36 +1,87 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-"""
-test_django-wrapper-tag
-------------
-
-Tests for `django-wrapper-tag` models module.
-"""
-
+from django.template import TemplateDoesNotExist
 from django.test import TestCase
 
-from wrapper_tag import tag
+from wrapper_tag import Options
 
 
-class TestOptionsTag(TestCase):
+class TestOptions(TestCase):
 
-    def test_auto_start_end_tag(self):
-        class CustomTag(tag.Tag):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_options_start_tag(self):
+        class Meta:
             pass
-        self.assertEqual(CustomTag.options.start_tag, 'custom', 'start_tag failed')
-        self.assertEqual(CustomTag.options.end_tag, 'end:custom', 'end_tag failed')
 
-    def test_auto_end_tag(self):
-        class CustomTag(tag.Tag):
-            class Meta:
-                start_tag = "nice"
+        class Meta2:
+            start_tag = "starter"
 
-    def test_custom_start_end(self):
-        class CustomTag(tag.Tag):
-            class Meta:
-                start_tag = "nice"
-                end_tag = "hack"
-        self.assertEqual(CustomTag.options.start_tag, 'nice', 'start_tag failed')
-        self.assertEqual(CustomTag.options.end_tag, 'hack', 'end_tag failed')
+        self.assertEqual(Options(Meta, "CustomTag").start_tag, "custom")
+        self.assertEqual(Options(Meta2, "CustomTag").start_tag, Meta2.start_tag)
+        self.assertEqual(Options(Meta, "CustomTa").start_tag, "custom_ta")
+
+    def test_options_end_tag(self):
+        class Meta:
+            pass
+
+        class Meta2:
+            start_tag = "starter"
+
+        class Meta3:
+            start_tag = "starter"
+            end_tag = "starter:over"
+
+        self.assertEqual(Options(Meta, "CustomTag").end_tag, "end:custom")
+        self.assertEqual(Options(Meta2, "CustomTag").end_tag, "end:starter")
+        self.assertEqual(Options(Meta3, "CustomTag").end_tag, "starter:over")
+
+    def test_options_namespace(self):
+        class Meta:
+            pass
+
+        class Meta2:
+            namespace = "wrapwrap"
+
+        self.assertEqual(Options(Meta, "CustomTag").namespace, None)
+        self.assertEqual(Options(Meta2, "CustomTag").namespace, Meta2.namespace)
+        self.assertEqual(Options(Meta2, "CustomTag").start_tag, "wrapwrap:custom")
+        self.assertEqual(Options(Meta2, "CustomTag").end_tag, "end:wrapwrap:custom")
+
+    def test_options_as_var_only(self):
+        class Meta:
+            pass
+
+        class Meta2:
+            as_var_only = True
+
+        self.assertEqual(Options(Meta, "CustomTag").as_var_only, False)
+        self.assertEqual(Options(Meta2, "CustomTag").as_var_only, True)
+
+    def test_template(self):
+        class Meta:
+            template = "templ"
+
+        self.assertEqual(Options(Meta, "Tag").template, Meta.template)
+
+    def test_template_name(self):
+        class Meta:
+            template_name = "existing.html"
+
+        # this raises error, we need to find out how to set templates directory correctly
+        with self.assertRaises(TemplateDoesNotExist):
+            Options(Meta, "Tag").get_template()
+
+    def test_no_template(self):
+        class Meta:
+            pass
+
+        with self.assertRaises(TemplateDoesNotExist):
+            Options(Meta, "Tag").get_template()
+
+
 
