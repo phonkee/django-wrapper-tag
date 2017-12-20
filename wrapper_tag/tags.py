@@ -193,7 +193,7 @@ class BaseTag(metaclass=TagMeta):
         return next(utils.unique_id)
 
 
-WRAPPER_TAG_KEY = 'tag'
+WRAPPER_TAG_KEY = 'wrapper_tag'
 PARENT_WRAPPER_TAG_KEY = 'parent'
 CONTENT_TAG = 'content'
 
