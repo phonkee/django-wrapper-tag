@@ -299,9 +299,6 @@ class Tag(BaseTag, Node):
     def render_tag(self, context: Context, content: str, render_data: dict):
         """
         Override this method if you need custom rendering of tag
-
-        @TODO: this method should return future `Rendered`, flatten context should be data for rendered
-
         :param context: template context
         :param content:
         :param render_data:
@@ -312,6 +309,6 @@ class Tag(BaseTag, Node):
             context_dict[WRAPPER_TAG_KEY] = render_data
             context_dict[CONTENT_TAG] = content
             template = self._meta.get_template()
-            rendered = template.render(context)
+            rendered = template.render(context.flatten())
 
         return RenderedTag(rendered, self._meta.start_tag, **render_data)
