@@ -232,7 +232,7 @@ class Tag(BaseTag, Node):
             arg_value = arg.get_value(context, arg_value)
 
             # run full clean
-            arg_value = arg.full_clean(self, arg_value)
+            arg_value = arg.full_clean(context, self, arg_value)
 
             # only non None values are added
             if arg_value is not None:

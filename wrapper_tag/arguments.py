@@ -87,7 +87,7 @@ class Argument:
             if utils.is_template_debug():
                 utils.verify_func_signature(clean_method, "value", "**kwargs")
 
-    def full_clean(self, tag_instance, value):
+    def full_clean(self, context, tag_instance, value):
         """
         full_clean performs full clean on value, following steps are run
 
@@ -110,7 +110,9 @@ class Argument:
             for validator in self._validators:
                 try:
                     validator(value)
-                except ValidationError:
+                except ValidationError as e:
+                    if utils.is_template_debug():
+                        raise TemplateSyntaxError("Argument {} raised during validation: {}".format(self.name, str(e)))
                     value = self.get_default()
                     break
                 except Exception:
@@ -120,7 +122,7 @@ class Argument:
 
         # now run custom clean method
         try:
-            value = getattr(tag_instance, self.clean_method_name)(value)
+            value = getattr(tag_instance, self.clean_method_name)(value, context=context)
         except ValidationError:
             value = self.get_default()
         except NotImplementedError:
