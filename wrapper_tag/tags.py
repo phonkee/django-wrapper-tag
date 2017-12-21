@@ -311,11 +311,11 @@ class Tag(BaseTag, Node):
             context_dict[CONTENT_TAG] = content
             template = self._meta.get_template()
 
-            if isinstance(context, RequestContext):
-                context_data = Context(context.flatten())
+            # we need to differentiate whether template is loaded with loader, when yes we need to pass just dict
+            # not Context
+            if self._meta.is_file_template():
+                rendered = template.render(context.flatten())
             else:
-                context_data = context
-
-            rendered = template.render(context_data)
+                rendered = template.render(context)
 
         return RenderedTag(rendered, self._meta.start_tag, **render_data)
