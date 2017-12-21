@@ -22,3 +22,12 @@ class TemplateMixin:
             return get_template(self.template_name)
 
         raise TemplateDoesNotExist("no template provided")
+
+    def is_file_template(self):
+        """
+        is_file_template returns whether we have loaded template by loader
+        this is needed since template render behaves other than template form string
+        if from file we need to pass just dictionary
+        :return:
+        """
+        return self.template_name is not None
