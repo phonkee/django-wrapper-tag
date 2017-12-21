@@ -312,7 +312,7 @@ class Tag(BaseTag, Node):
             template = self._meta.get_template()
 
             if isinstance(context, RequestContext):
-                context_data = context.flatten()
+                context_data = Context(context.flatten())
             else:
                 context_data = context
 
