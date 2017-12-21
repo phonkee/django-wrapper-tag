@@ -29,5 +29,5 @@ class TestCompileTag(Tag):
         start_tag = "test_compile"
         template = "{{ content }}"
 
-    def render_first(self, context, data, **kwargs):
+    def render_first(self, data, **kwargs):
         return "ohohoooo"

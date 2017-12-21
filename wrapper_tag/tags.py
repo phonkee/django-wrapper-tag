@@ -4,6 +4,7 @@
 import collections
 import copy
 
+from django.template import RequestContext
 from django.template.base import Context, Node, TemplateSyntaxError
 
 from . import utils
@@ -241,12 +242,12 @@ class Tag(BaseTag, Node):
         rendered_args = {}
 
         # iterate over all arguments and call `render_<field>` methods.
-        for tag_name, tag in self.arguments.items():
+        for arg_name, arg in self.arguments.items():
             try:
-                rendered = tag.render(context, render_data, self)
+                rendered = arg.render(context, render_data, self)
                 if rendered is None:
                     continue
-                rendered_args["{}__rendered".format(tag_name)] = rendered
+                rendered_args["{}__rendered".format(arg_name)] = rendered
             except NotImplementedError:
                 continue
 
@@ -309,6 +310,12 @@ class Tag(BaseTag, Node):
             context_dict[WRAPPER_TAG_KEY] = render_data
             context_dict[CONTENT_TAG] = content
             template = self._meta.get_template()
-            rendered = template.render(context.flatten())
+
+            if isinstance(context, RequestContext):
+                context_data = context.flatten()
+            else:
+                context_data = context
+
+            rendered = template.render(context_data)
 
         return RenderedTag(rendered, self._meta.start_tag, **render_data)

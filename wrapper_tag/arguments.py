@@ -68,14 +68,14 @@ class Argument:
         render_method = getattr(cls, self.render_method_name, None)
 
         if render_method is None:
-            def blank(self, context, data, **kwargs):
+            def blank(self, data, **kwargs):
                 raise NotImplementedError
 
             # set method to blank one
             setattr(cls, self.render_method_name, blank)
         else:
             if utils.is_template_debug():
-                utils.verify_func_signature(render_method, "context", "data", "**kwargs")
+                utils.verify_func_signature(render_method, "data", "**kwargs")
 
         clean_method = getattr(cls, self.clean_method_name, None)
         if clean_method is None:
@@ -156,7 +156,10 @@ class Argument:
         :param tag:
         :return:
         """
-        result = getattr(tag, self.render_method_name)(context, data)
+        kwargs = {
+            "context": context,
+        }
+        result = getattr(tag, self.render_method_name)(data, **kwargs)
 
         return result
 
