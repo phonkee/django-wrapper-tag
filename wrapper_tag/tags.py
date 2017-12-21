@@ -140,8 +140,9 @@ class TagMeta(type):
         # when template debug is enabled we raise exception, otherwise we just ignore args/kwargs
 
         if parsed_args and utils.is_template_debug():
+            formatted = [x.token for x in parsed_args]
             raise TemplateSyntaxError(
-                'Tag `{}` received unhandled args: {}'.format(self._meta.start_tag, parsed_args))
+                'Tag `{}` received unhandled args: {}'.format(self._meta.start_tag, formatted))
 
         if parsed_kwargs and utils.is_template_debug():
             raise TemplateSyntaxError('Tag `{}` received unhandled kwargs: {}'.format(
